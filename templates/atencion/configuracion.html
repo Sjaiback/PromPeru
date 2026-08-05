@@ -1,0 +1,29 @@
+{% extends 'base.html' %}{% block title %}Configuración · PROMPERÚ{% endblock %}{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Administración del sistema</span>
+    <h1>Configuración</h1>
+    <p>Resumen de tu cuenta y de los catálogos que usa el registro de atenciones.</p>
+  </div>
+</header>
+<section class="detail-grid">
+  <article class="detail-card">
+    <h2>Mi acceso</h2>
+    <dl>
+      <dt>Usuario</dt><dd>{{ user.get_full_name|default:user.username }}</dd>
+      <dt>Correo</dt><dd>{{ user.email|default:'No registrado' }}</dd>
+      <dt>Rol</dt><dd>{% if user.is_superuser %}Administrador general{% elif perfil %}{{ perfil.get_rol_display }}{% else %}Usuario interno{% endif %}</dd>
+      <dt>Estado</dt><dd>Activo</dd>
+    </dl>
+  </article>
+  <article class="detail-card">
+    <h2>Catálogos activos</h2>
+    <dl>
+      <dt>Responsables</dt><dd>{{ total_responsables }}</dd>
+      <dt>Regiones</dt><dd>{{ total_regiones }}</dd>
+      <dt>Sectores</dt><dd>{{ total_sectores }}</dd>
+    </dl>
+    <p class="muted">Estos catálogos alimentan los formularios. Su edición se habilitará en esta pantalla cuando se definan los usuarios finales y permisos de cada asesor.</p>
+  </article>
+</section>
+{% endblock %}

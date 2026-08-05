@@ -251,3 +251,22 @@ def auditoria(request):
             ).get_page(request.GET.get("page"))
         },
     )
+
+
+@login_required
+def configuracion(request):
+    """Internal settings overview; Django's technical admin remains off-menu."""
+    if not request.user.is_staff and not request.user.is_superuser:
+        return render(request, "atencion/sin_acceso.html", status=403)
+    from .models import Region, Responsable, Sector
+
+    return render(
+        request,
+        "atencion/configuracion.html",
+        {
+            "perfil": perfil_activo(request.user),
+            "total_responsables": Responsable.objects.filter(activo=True).count(),
+            "total_regiones": Region.objects.filter(activo=True).count(),
+            "total_sectores": Sector.objects.filter(activo=True).count(),
+        },
+    )

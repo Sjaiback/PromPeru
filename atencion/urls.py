@@ -28,5 +28,6 @@ urlpatterns = [
         name="empresa_desactivar",
     ),
     path("panel/auditoria/", views.auditoria, name="auditoria"),
+    path("panel/configuracion/", views.configuracion, name="configuracion"),
     path("api/empresa/", views.buscar_documento, name="buscar_documento"),
 ]

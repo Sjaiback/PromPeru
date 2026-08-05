@@ -90,3 +90,21 @@ class FlujoAtencionTests(TestCase):
         self.assertTrue(data["encontrado"])
         self.assertNotIn("email", data)
         self.assertNotIn("telefono", data)
+
+    def test_auditoria_muestra_registros_del_formulario_publico(self):
+        self.client.post(reverse("atencion:publico"), self.payload_nuevo())
+        self.user.is_staff = True
+        self.user.is_superuser = True
+        self.user.save(update_fields=["is_staff", "is_superuser"])
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("atencion:auditoria"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Formulario público")
+
+    def test_configuracion_interna_no_redirige_al_admin_django(self):
+        self.user.is_staff = True
+        self.user.save(update_fields=["is_staff"])
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("atencion:configuracion"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Catálogos activos")
