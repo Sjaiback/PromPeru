@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.utils import timezone
 from .models import Atencion, Empresa, Region, Responsable, Sector
 
@@ -15,6 +16,15 @@ DETALLE_EMPRESA = [
     "telefono",
     "email",
 ]
+
+
+def opciones_catalogo(clave, queryset):
+    """Avoid remote database round-trips for catalogues that rarely change."""
+    opciones = cache.get(clave)
+    if opciones is None:
+        opciones = list(queryset.values_list("pk", "nombre"))
+        cache.set(clave, opciones, 300)
+    return opciones
 
 
 class AtencionRegistroForm(forms.Form):
@@ -91,6 +101,15 @@ class AtencionRegistroForm(forms.Form):
         self.fields["responsable"].queryset = Responsable.objects.filter(activo=True)
         self.fields["sector"].queryset = Sector.objects.filter(activo=True)
         self.fields["region"].queryset = Region.objects.filter(activo=True)
+        self.fields["responsable"].choices = [("", "Seleccionar una opción")] + opciones_catalogo(
+            "catalogo:responsables", Responsable.objects.filter(activo=True)
+        )
+        self.fields["sector"].choices = [("", "Seleccionar una opción")] + opciones_catalogo(
+            "catalogo:sectores", Sector.objects.filter(activo=True)
+        )
+        self.fields["region"].choices = [("", "Seleccionar una opción")] + opciones_catalogo(
+            "catalogo:regiones", Region.objects.filter(activo=True)
+        )
         if asesor and getattr(asesor, "responsable", None):
             self.fields["responsable"].initial = asesor.responsable
             self.fields["responsable"].disabled = True

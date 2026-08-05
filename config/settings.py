@@ -91,6 +91,15 @@ LOGIN_REDIRECT_URL = "atencion:inicio"
 LOGOUT_REDIRECT_URL = "atencion:publico"
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024
 
+# Small, process-local cache for stable catalogue data used by public forms.
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "promperu-catalogos",
+        "TIMEOUT": 300,
+    }
+}
+
 try:
     from .local_settings import *  # noqa: F401,F403
 except ImportError:
