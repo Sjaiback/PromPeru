@@ -2,6 +2,21 @@ from pathlib import Path
 import os
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+def load_env_file(path):
+    """Load local development secrets without adding another dependency."""
+    if not path.exists():
+        return
+    for raw_line in path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
+
+
+load_env_file(BASE_DIR / ".env")
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY", "promperu-local-dev-2026-a8f4c1e7d9b2-k6m3q5s8v1x7z4"
 )
@@ -80,3 +95,20 @@ try:
     from .local_settings import *  # noqa: F401,F403
 except ImportError:
     pass
+
+# A DB_HOST value in .env takes precedence over local_settings.py. This keeps
+# local development working while allowing production/Supabase configuration
+# to remain outside source control.
+if os.environ.get("DB_HOST"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("DB_NAME", "postgres"),
+            "USER": os.environ["DB_USER"],
+            "PASSWORD": os.environ["DB_PASSWORD"],
+            "HOST": os.environ["DB_HOST"],
+            "PORT": os.environ.get("DB_PORT", "5432"),
+            "OPTIONS": {"sslmode": os.environ.get("DB_SSLMODE", "require")},
+            "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "0")),
+        }
+    }
