@@ -1,0 +1,37 @@
+{% extends 'base.html' %}{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Control de cambios</span>
+    <h1>Auditoría</h1>
+    <p>Quién cambió qué, cuándo y desde qué dirección.</p>
+  </div>
+</header>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Usuario</th>
+        <th>Acción</th>
+        <th>Entidad</th>
+        <th>Descripción</th>
+        <th>IP</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in page %}
+      <tr>
+        <td>{{ log.fecha_hora|date:'d/m/Y H:i:s' }}</td>
+        <td>
+          {{ log.actor.get_full_name|default:log.actor.username|default:'Formulario público' }}
+        </td>
+        <td><span class="pill">{{ log.get_accion_display }}</span></td>
+        <td>{{ log.entidad }} #{{ log.objeto_id }}</td>
+        <td>{{ log.descripcion }}</td>
+        <td>{{ log.ip|default:'—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

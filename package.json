@@ -1,0 +1,16 @@
+{
+  "name": "promperusistematizacion",
+  "version": "1.0.0",
+  "description": "Aplicación Django para registro público de visitas, atención por asesores, seguimiento, evaluación empresarial, auditoría, BI y archivo mensual.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "prettier": "3.9.6"
+  }
+}

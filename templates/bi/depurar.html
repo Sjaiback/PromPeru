@@ -1,0 +1,24 @@
+{% extends 'base.html' %}{% block content %}
+<section class="confirm-shell">
+  <span class="eyebrow">Confirmación irreversible</span>
+  <h1>Liberar {{ archivo.total_atenciones }} atenciones</h1>
+  <p>
+    Se eliminarán las visitas del {{ archivo.desde|date:'d/m/Y' }} al {{ archivo.hasta|date:'d/m/Y' }}. Permanecerán las empresas, contactos,
+    usuarios y asesores.
+  </p>
+  <form method="post" class="stack">
+    {% csrf_token %}<label
+      >Escribe <strong>DEPURAR</strong> para confirmar<input
+        class="form-control"
+        name="confirmacion"
+        autocomplete="off"
+    /></label>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="{% url 'bi:archivos' %}">Cancelar</a
+      ><button class="btn btn-danger" type="submit">
+        Eliminar visitas archivadas
+      </button>
+    </div>
+  </form>
+</section>
+{% endblock %}

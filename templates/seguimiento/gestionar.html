@@ -1,0 +1,42 @@
+{% extends 'base.html' %}{% block content %}
+<header class="page-head compact">
+  <div>
+    <span class="eyebrow">Seguimiento #{{ atencion.pk }}</span>
+    <h1>{{ atencion.empresa.nombre }}</h1>
+    <p>{{ atencion.tema_consulta }}</p>
+  </div>
+</header>
+<div class="work-grid">
+  <form method="post" class="form-card" novalidate>
+    {% csrf_token %}
+    <fieldset>
+      <legend><span>01</span> Estado de la gestión</legend>
+      <div class="form-grid">
+        {% for field in form %}<label
+          class="{% if field.name == 'observaciones' %}span-2{% endif %}"
+          ><span>{{ field.label }}</span>{{ field }}{{ field.errors }}</label
+        >{% endfor %}
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend><span>02</span> Nueva entrada de seguimiento</legend>
+      <label><span>{{ log_form.detalle.label }}</span>{{ log_form.detalle }}{{ log_form.detalle.errors }}</label>
+    </fieldset>
+    <button class="btn btn-primary" type="submit">
+      Guardar actualización →
+    </button>
+  </form>
+  <aside class="timeline">
+    <h2>Historial</h2>
+    {% for log in gestion.seguimientos.all %}
+    <article>
+      <time>{{ log.fecha_hora|date:'d M Y · H:i' }}</time>
+      <p>{{ log.detalle }}</p>
+      <small>{{ log.autor.get_full_name|default:log.autor.username }}</small>
+    </article>
+    {% empty %}
+    <p class="muted">Aún no hay entradas de seguimiento.</p>
+    {% endfor %}
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,205 @@
+{% load static %}
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <meta
+        name="description"
+        content="Sistema de atención de PROMPERÚ Macro Región Centro Este"
+    />
+
+    <title>
+        {% block title %}PROMPERÚ Centro Este{% endblock %}
+    </title>
+
+    <link
+        rel="preload"
+        as="image"
+        href="{% static 'img/logo-promperu-hd.webp' %}"
+    />
+
+    {% block preload %}{% endblock %}
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/app.css' %}?v=20260803-4"
+    />
+
+    <link
+        rel="stylesheet"
+        href="{% static 'css/overrides.css' %}?v=20260803-4"
+    />
+
+    <script
+        defer
+        src="{% static 'js/app.js' %}?v=20260803-4"
+    ></script>
+</head>
+
+<body class="{% if not user.is_authenticated %}public-body{% endif %}">
+
+    <a class="skip-link" href="#contenido">
+        Ir al contenido
+    </a>
+
+    <div
+        class="page-progress"
+        data-page-progress
+        aria-hidden="true"
+    ></div>
+
+    {% if user.is_authenticated %}
+
+        <aside class="sidebar" id="sidebar">
+
+            <a
+                class="brand brand-official"
+                href="{% url 'atencion:inicio' %}"
+            >
+                <img
+                    src="{% static 'img/logo-promperu-hd.webp' %}"
+                    alt="PROMPERÚ"
+                    width="170"
+                    height="73"
+                />
+            </a>
+
+            <div class="sidebar-label">
+                Gestión regional
+            </div>
+
+            <nav aria-label="Navegación principal">
+
+                <a href="{% url 'atencion:inicio' %}">
+                    Resumen
+                </a>
+
+                <a href="{% url 'atencion:registrar' %}">
+                    Nueva atención
+                </a>
+
+                <a href="{% url 'atencion:empresas' %}">
+                    Empresas y contactos
+                </a>
+
+                <a href="{% url 'seguimiento:bandeja' %}">
+                    Seguimiento
+                </a>
+
+                {% if user.is_superuser or user.perfil_asesor.acceso_bi %}
+                    <a href="{% url 'bi:dashboard' %}">
+                        Inteligencia de negocios
+                    </a>
+                {% endif %}
+
+                {% if user.is_superuser or user.perfil_asesor.puede_archivar %}
+                    <a href="{% url 'bi:archivos' %}">
+                        Archivo mensual
+                    </a>
+
+                    <a href="{% url 'atencion:auditoria' %}">
+                        Auditoría
+                    </a>
+                {% endif %}
+
+                {% if user.is_staff %}
+                    <a href="{% url 'rating:importar' %}">
+                        Importar rating
+                    </a>
+
+                    <a href="{% url 'admin:index' %}">
+                        Configuración
+                    </a>
+                {% endif %}
+
+            </nav>
+
+            <div class="user-card">
+
+                <span class="avatar">
+                    {{ user.first_name|default:user.username|slice:':1'|upper }}
+                </span>
+
+                <div>
+                    <strong>
+                        {{ user.get_full_name|default:user.username }}
+                    </strong>
+
+                    <small>
+                        {{ user.perfil_asesor.cargo|default:'Asesor' }}
+                    </small>
+                </div>
+
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="link-button">
+                        Salir
+                    </button>
+                </form>
+
+            </div>
+
+        </aside>
+
+        <button
+            type="button"
+            class="menu-toggle"
+            data-menu
+            aria-label="Abrir menú"
+        >
+            ☰
+        </button>
+
+    {% else %}
+
+        <header class="public-nav">
+
+            <a
+                class="public-brand"
+                href="{% url 'atencion:publico' %}"
+            >
+                <img
+                    src="{% static 'img/logo-promperu-hd.webp' %}"
+                    alt="PROMPERÚ"
+                    width="175"
+                    height="75"
+                />
+
+                <span>Macro Región Centro Este</span>
+            </a>
+
+            <a class="btn btn-dark" href="{% url 'login' %}">
+                Acceso para asesores
+                <span aria-hidden="true">↗</span>
+            </a>
+
+        </header>
+
+    {% endif %}
+
+    <main
+        id="contenido"
+        class="{% if user.is_authenticated %}app-main{% else %}public-main{% endif %}"
+    >
+
+        {% if messages %}
+            <div class="messages">
+
+                {% for message in messages %}
+                    <div class="message {{ message.tags }}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+
+            </div>
+        {% endif %}
+
+        {% block content %}
+        {% endblock %}
+
+    </main>
+
+</body>
+</html>

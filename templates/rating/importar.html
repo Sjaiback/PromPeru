@@ -1,0 +1,54 @@
+{% extends 'base.html' %}{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Módulo 03</span>
+    <h1>Importar rating histórico</h1>
+    <p>
+      Lee encabezados multinivel, revisa el mapeo y confirma antes de modificar
+      datos.
+    </p>
+  </div>
+</header>
+<section class="upload-card">
+  <div class="upload-icon">XLSX</div>
+  <form method="post" enctype="multipart/form-data" class="stack">
+    {% csrf_token %}{{ form.as_p }}<button
+      class="btn btn-primary"
+      type="submit"
+    >
+      Analizar archivo →
+    </button>
+  </form>
+</section>
+<section>
+  <div class="section-title"><h2>Importaciones recientes</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Archivo</th>
+          <th>Nuevas</th>
+          <th>Actualizadas</th>
+          <th>Fallidas</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in logs %}
+        <tr>
+          <td>{{ log.fecha|date:'d/m/Y H:i' }}</td>
+          <td>{{ log.archivo_nombre }}</td>
+          <td>{{ log.filas_importadas }}</td>
+          <td>{{ log.filas_actualizadas }}</td>
+          <td>{{ log.filas_fallidas }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="empty">No hay importaciones previas.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

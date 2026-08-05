@@ -1,0 +1,58 @@
+{% extends 'base.html' %}{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Vista previa · {{ total }} filas</span>
+    <h1>Confirma el mapeo</h1>
+    <p>
+      Ajusta únicamente las columnas que no hayan sido interpretadas
+      correctamente.
+    </p>
+  </div>
+</header>
+<form method="post" action="{% url 'rating:confirmar' %}" class="stack">
+  {% csrf_token %}
+  <div class="mapping-grid">
+    {% for col in columnas %}<label
+      ><span title="{{ col.encabezado }}"
+        >{{ col.encabezado|truncatechars:60 }}</span
+      ><input
+        class="form-control"
+        name="map_{{ col.indice }}"
+        value="{{ col.sugerencia }}"
+        placeholder="Ej. empresa.nombre o criterio:codigo" /></label
+    >{% endfor %}
+  </div>
+  <label class="inline-field"
+    >Si el documento ya existe<select class="form-control" name="duplicados">
+      <option value="actualizar">Actualizar registro existente</option>
+      <option value="ignorar">Ignorar la fila</option>
+    </select></label
+  >
+  <div class="table-wrap preview-table">
+    <table>
+      <thead>
+        <tr>
+          {% for h in headers %}
+          <th>{{ h|truncatechars:35 }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          {% for value in row %}
+          <td>{{ value|truncatechars:45 }}</td>
+          {% endfor %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="{% url 'rating:importar' %}">Cancelar</a
+    ><button class="btn btn-primary" type="submit">
+      Confirmar importación →
+    </button>
+  </div>
+</form>
+{% endblock %}

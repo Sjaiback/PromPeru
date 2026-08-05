@@ -1,0 +1,67 @@
+{% extends 'base.html' %}{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Panel operativo</span>
+    <h1>Buenos días, {{ user.first_name|default:user.username }}.</h1>
+    <p>Una vista clara de la atención comercial de hoy.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'atencion:registrar' %}"
+    >+ Registrar atención</a
+  >
+</header>
+<section class="hero-metric">
+  <div>
+    <span>Atenciones registradas</span
+    ><strong data-count="{{ total }}">{{ total }}</strong>
+    <p>Historial consolidado y sin duplicar clientes.</p>
+  </div>
+  <div class="metric-lines" aria-hidden="true">
+    <i></i><i></i><i></i><i></i><i></i>
+  </div>
+</section>
+<section>
+  <div class="section-title">
+    <h2>Actividad reciente</h2>
+    <a href="{% url 'seguimiento:bandeja' %}">Ver bandeja →</a>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Fecha</th>
+          <th>Empresa / persona</th>
+          <th>Canal</th>
+          <th>Responsable</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in recientes %}
+        <tr>
+          <td>{{ a.fecha|date:'d M Y' }}</td>
+          <td>
+            <strong>{{ a.empresa.nombre }}</strong
+            ><small>{{ a.empresa.numero_documento }}</small>
+          </td>
+          <td><span class="pill">{{ a.tipo_atencion }}</span></td>
+          <td>{{ a.responsable.nombre }}</td>
+          <td>
+            <a
+              href="{% url 'atencion:detalle' a.pk %}"
+              aria-label="Ver atención"
+              >→</a
+            >
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="empty">
+            Aún no hay atenciones. Registra la primera.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

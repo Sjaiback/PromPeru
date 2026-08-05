@@ -1,0 +1,14 @@
+{% extends 'base.html' %}{% block title %}Atención registrada · PROMPERÚ{% endblock %}{% block content %}
+<section class="success-shell">
+  <span class="success-mark">✓</span
+  ><span class="eyebrow">Registro completado</span>
+  <h1>Gracias por comunicarte con PROMPERÚ.</h1>
+  <p>
+    Tu atención fue asignada al responsable seleccionado. Ya puedes cerrar esta
+    ventana.
+  </p>
+  <a class="btn btn-primary" href="{% url 'atencion:publico' %}"
+    >Registrar otra atención</a
+  >
+</section>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends 'base.html' %}
+{% block title %}
+  {% if publico %}Registrar atención{% else %}Nueva atención{% endif %} · PROMPERÚ
+{% endblock %}
+{% block content %}
+<section class="{% if publico %}public-form-shell{% endif %}">
+  <header class="page-head compact">
+    <div>
+      <span class="eyebrow">{% if publico %}Macro Región Centro Este{% else %}Registro del asesor{% endif %}</span>
+      <h1>{% if publico %}Bienvenido a PROMPERÚ.{% else %}Nueva atención{% endif %}</h1>
+      <p>
+        {% if publico %}Ingresa tu DNI, RUC o CE. Si ya nos visitaste, no
+        tendrás que volver a escribir tus datos.{% endif %}
+      </p>
+    </div>
+  </header>
+  <form
+    method="post"
+    class="form-card public-register"
+    novalidate
+    data-atencion-form
+    data-publico="{% if publico %}1{% else %}0{% endif %}"
+  >
+    {% csrf_token %} {% if form.non_field_errors %}
+    <div class="error-box">{{ form.non_field_errors }}</div>
+    {% endif %}
+    <fieldset class="identity-step">
+      <legend><span>01</span> Identifícate</legend>
+      <div class="document-row">
+        <label><span>{{ form.tipo_documento.label }}</span>{{ form.tipo_documento }}</label>
+        <label class="document-number">
+          <span>{{ form.numero_documento.label }}</span>{{ form.numero_documento }}
+          {% if form.numero_documento.errors %}<small class="field-error">{{ form.numero_documento.errors|striptags }}</small>{% endif %}
+        </label>
+        <button class="btn btn-dark lookup-button" type="button" data-lookup>
+          Continuar →
+        </button>
+      </div>
+      <div class="document-hint" data-document-hint>
+        Usaremos el documento únicamente para encontrar tu registro.
+      </div>
+      <label class="update-toggle" data-update-toggle hidden>{{ form.actualizar_datos }}<span>Actualizar mis datos guardados</span></label>
+    </fieldset>
+    <fieldset class="required-step" data-required-step hidden>
+      <legend><span>02</span> Datos de esta atención</legend>
+      <div class="form-grid">
+        <label><span>{{ form.tipo_atencion.label }}</span>{{ form.tipo_atencion }}{{ form.tipo_atencion.errors }}</label>
+        <label><span>{{ form.responsable.label }}</span>{{ form.responsable }}{{ form.responsable.errors }}</label>
+        <label class="span-2"><span>{{ form.tema_consulta.label }}</span>{{ form.tema_consulta }}{{ form.tema_consulta.errors }}</label>
+      </div>
+    </fieldset>
+    <fieldset class="company-step" data-company-step hidden>
+      <legend>
+        <span>03</span> Datos de contacto
+        <small data-company-mode>Completa tu registro</small>
+      </legend>
+      <div class="form-grid">
+        {% for field in form %}
+          {% if field.name == 'sector' or field.name == 'oferta_producto_servicio' or field.name == 'region' or field.name == 'nombre' or field.name == 'tipo_personeria' or field.name == 'nombres_apellidos' or field.name == 'cargo' or field.name == 'tipo_usuario' or field.name == 'telefono' or field.name == 'email' %}
+            <label class="{% if field.name == 'oferta_producto_servicio' %}span-2{% endif %}">
+              <span>{{ field.label }}</span>
+              {{ field }}
+              {% if field.errors %}
+                <small class="field-error">{{ field.errors|striptags }}</small>
+              {% endif %}
+            </label>
+          {% endif %}
+        {% endfor %}
+      </div>
+    </fieldset>
+    <div class="form-actions" data-submit-row hidden>
+      <a
+        class="btn btn-ghost"
+        href="{% if publico %}{% url 'atencion:publico' %}{% else %}{% url 'atencion:inicio' %}{% endif %}"
+        >Cancelar</a
+      >
+      <button class="btn btn-primary" type="submit">
+        Registrar atención <span>→</span>
+      </button>
+    </div>
+  </form>
+</section>
+{% endblock %}

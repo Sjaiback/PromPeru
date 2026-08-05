@@ -1,0 +1,56 @@
+{% extends 'base.html' %}{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Atención #{{ atencion.pk }}</span>
+    <h1>{{ atencion.empresa.nombre }}</h1>
+    <p>
+      {{ atencion.empresa.numero_documento }} · {{ atencion.fecha|date:'d de F de Y' }}
+    </p>
+  </div>
+  <div class="button-row">
+    <a
+      class="btn btn-ghost"
+      href="{% url 'atencion:atencion_editar' atencion.pk %}"
+      >Editar</a
+    ><a
+      class="btn btn-primary"
+      href="{% url 'seguimiento:gestionar' atencion.pk %}"
+      >Abrir seguimiento →</a
+    >
+  </div>
+</header>
+<section class="detail-grid">
+  <article class="detail-card">
+    <h2>Consulta</h2>
+    <p>{{ atencion.tema_consulta|default:'Sin tema registrado' }}</p>
+    <dl>
+      <dt>Canal</dt>
+      <dd>{{ atencion.tipo_atencion }}</dd>
+      <dt>Responsable</dt>
+      <dd>{{ atencion.responsable.nombre }}</dd>
+      <dt>Sector</dt>
+      <dd>{{ atencion.empresa.sector }}</dd>
+      <dt>Región</dt>
+      <dd>{{ atencion.empresa.region }}</dd>
+    </dl>
+  </article>
+  <article class="detail-card">
+    <h2>Contacto</h2>
+    <dl>
+      <dt>Persona</dt>
+      <dd>{{ atencion.empresa.nombres_apellidos|default:'—' }}</dd>
+      <dt>Cargo</dt>
+      <dd>{{ atencion.empresa.cargo|default:'—' }}</dd>
+      <dt>Teléfono</dt>
+      <dd>{{ atencion.empresa.telefono }}</dd>
+      <dt>Email</dt>
+      <dd>{{ atencion.empresa.email }}</dd>
+      <dt>Tipo de usuario</dt>
+      <dd>{{ atencion.empresa.tipo_usuario }}</dd>
+    </dl>
+    <a class="text-link" href="{% url 'rating:evaluar' atencion.empresa_id %}"
+      >Completar evaluación de empresa →</a
+    >
+  </article>
+</section>
+{% endblock %}

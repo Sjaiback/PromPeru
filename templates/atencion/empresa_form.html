@@ -1,0 +1,37 @@
+{% extends 'base.html' %}{% block content %}
+<header class="page-head compact">
+  <div>
+    <span class="eyebrow">CRUD auditado</span>
+    <h1>Editar empresa o contacto</h1>
+    <p>
+      Cualquier modificación quedará registrada con tu usuario, fecha y valores
+      anteriores.
+    </p>
+  </div>
+</header>
+<form method="post" class="form-card" novalidate>
+  {% csrf_token %}
+  <div class="form-grid">
+    {% for field in form %}<label
+      class="{% if field.name == 'oferta_producto_servicio' %}span-2{% endif %}"
+      ><span>{{ field.label }}</span>{{ field }}{{ field.errors }}</label
+    >{% endfor %}
+  </div>
+  <div class="form-actions">
+    <a class="btn btn-ghost" href="{% url 'atencion:empresas' %}">Cancelar</a
+    ><button class="btn btn-primary" type="submit">Guardar cambios</button>
+  </div>
+</form>
+<form
+  method="post"
+  action="{% url 'atencion:empresa_desactivar' empresa.pk %}"
+  class="danger-zone"
+>
+  {% csrf_token %}
+  <div>
+    <strong>Desactivar registro</strong>
+    <p>Oculta el contacto sin eliminar su historial.</p>
+  </div>
+  <button class="btn btn-danger" type="submit">Desactivar</button>
+</form>
+{% endblock %}

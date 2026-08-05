@@ -1,0 +1,69 @@
+{% extends 'base.html' %}{% load static %}{% block title %}Acceso institucional
+· PROMPERÚ{% endblock %}{% block preload %}<link
+  rel="preload"
+  as="image"
+  href="{% static 'img/hero-login-peru.webp' %}"
+  fetchpriority="high"
+/>{% endblock %}{% block content %}
+<section class="login-shell" data-login-scene>
+  <div class="login-art">
+    <img
+      class="login-hero"
+      src="{% static 'img/hero-login-peru.webp' %}"
+      alt="Productores peruanos de agro, pesca y textiles"
+      width="2000"
+      height="1250"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="login-shade" aria-hidden="true"></div>
+    <div class="login-grain" aria-hidden="true"></div>
+    <div class="login-copy" data-reveal>
+      <h1>
+        El Perú avanza<br />cuando sus ideas<br /><em>encuentran camino.</em>
+      </h1>
+    </div>
+    <div class="login-image-caption">PROMPERÚ</div>
+  </div>
+  <div class="login-panel" data-reveal>
+    <a class="login-logo" href="{% url 'atencion:publico' %}"
+      ><img
+        src="{% static 'img/logo-promperu-hd.webp' %}"
+        alt="PROMPERÚ"
+        width="210"
+        height="90"
+    /></a>
+    <h2>Acceso institucional</h2>
+    <p class="muted">
+      Ingresa para continuar con la gestión de atenciones y seguimientos.
+    </p>
+    {% if form.errors %}
+    <div class="error-box" role="alert">
+      Los datos no coinciden. Revisa tu usuario y contraseña.
+    </div>
+    {% endif %}
+    <form method="post" class="stack login-form" data-login-form>
+      {% csrf_token %}<label><span>Usuario</span>{{ form.username }}</label
+      ><label
+        ><span>Contraseña</span
+        ><span class="password-wrap"
+          >{{ form.password }}<button
+            type="button"
+            class="password-toggle"
+            data-password-toggle
+            aria-label="Mostrar contraseña"
+          >
+            Ver
+          </button></span
+        ></label
+      ><button class="btn btn-primary login-submit" type="submit">
+        <span>Ingresar al sistema</span><b aria-hidden="true">→</b>
+      </button>
+    </form>
+    <div class="login-support">
+      <span class="security-dot" aria-hidden="true"></span
+      ><small>Acceso protegido · Entorno de uso institucional</small>
+    </div>
+  </div>
+</section>
+{% endblock %}

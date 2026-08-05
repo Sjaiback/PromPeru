@@ -1,0 +1,62 @@
+{% extends 'base.html' %}{% block title %}Empresas y contactos · PROMPERÚ{% endblock %}{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Base permanente</span>
+    <h1>Empresas y contactos</h1>
+    <p>Estos registros no se eliminan durante la depuración mensual.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'atencion:registrar' %}"
+    >+ Nueva atención</a
+  >
+</header>
+<form method="get" class="filters">
+  <label
+    >Buscar por documento, empresa o contacto<input
+      class="form-control"
+      name="q"
+      value="{{ q }}"
+      placeholder="Escribe para buscar..." /></label
+  ><button class="btn btn-dark" type="submit">Buscar</button>
+</form>
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>Documento</th>
+        <th>Empresa / persona</th>
+        <th>Contacto</th>
+        <th>Sector</th>
+        <th>Región</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in page %}
+      <tr>
+        <td>{{ e.numero_documento }}</td>
+        <td><strong>{{ e.nombre }}</strong><small>{{ e.email }}</small></td>
+        <td>{{ e.nombres_apellidos|default:'—' }}</td>
+        <td>{{ e.sector }}</td>
+        <td>{{ e.region }}</td>
+        <td>
+          <span class="pill"
+            >{% if e.activa %}Activa{% else %}Desactivada{% endif %}</span
+          >
+        </td>
+        <td>
+          <div class="row-actions">
+            <a href="{% url 'atencion:empresa_editar' e.pk %}">Editar</a
+            ><a href="{% url 'rating:evaluar' e.pk %}">Evaluar</a>
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="7" class="empty">No se encontraron registros.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
