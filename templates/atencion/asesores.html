@@ -1,0 +1,19 @@
+{% extends 'base.html' %}{% block title %}Asesores · PROMPERÚ{% endblock %}{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Configuración</span>
+    <h1>Gestión de asesores</h1>
+    <p>Solo el administrador general puede modificar las cuentas internas.</p>
+  </div>
+  <a class="btn btn-ghost" href="{% url 'atencion:configuracion' %}">Volver</a>
+</header>
+<div class="table-wrap"><table>
+  <thead><tr><th>Asesor</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+  <tbody>{% for perfil in perfiles %}<tr>
+    <td><strong>{{ perfil.responsable.nombre }}</strong><small>{{ perfil.usuario.get_full_name }}</small></td>
+    <td>{{ perfil.usuario.username }}</td><td>{{ perfil.usuario.email|default:'Sin correo' }}</td>
+    <td>{{ perfil.get_rol_display }}</td><td><span class="pill">{% if perfil.usuario.is_active %}Activa{% else %}Desactivada{% endif %}</span></td>
+    <td><a href="{% url 'atencion:asesor_editar' perfil.pk %}">Editar cuenta</a></td>
+  </tr>{% empty %}<tr><td colspan="6" class="empty">Aún no hay asesores vinculados.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

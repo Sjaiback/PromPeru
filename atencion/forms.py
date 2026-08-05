@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth import get_user_model
 from django.utils import timezone
 from .models import Atencion, Empresa, Region, Responsable, Sector
 
@@ -204,5 +205,24 @@ class AtencionEdicionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if asesor and asesor.responsable and asesor.rol == "asesor":
             self.fields["responsable"].disabled = True
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "form-control")
+
+
+class AsesorEmailForm(forms.ModelForm):
+    """Limited account edition available only to the system administrator."""
+
+    class Meta:
+        model = get_user_model()
+        fields = ["first_name", "last_name", "email", "is_active"]
+        labels = {
+            "first_name": "Nombres",
+            "last_name": "Apellidos",
+            "email": "Correo electrónico",
+            "is_active": "Cuenta activa",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "form-control")

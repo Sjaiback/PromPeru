@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 from seguimiento.models import EstadoAtencion, GestionAtencion
 from .auditoria import registrar as auditar, serializar
-from .forms import AtencionEdicionForm, AtencionRegistroForm, EmpresaForm
+from .forms import AsesorEmailForm, AtencionEdicionForm, AtencionRegistroForm, EmpresaForm
 from .models import Atencion, Empresa, PerfilAsesor
 
 
@@ -269,4 +269,41 @@ def configuracion(request):
             "total_regiones": Region.objects.filter(activo=True).count(),
             "total_sectores": Sector.objects.filter(activo=True).count(),
         },
+    )
+
+
+@login_required
+def asesores(request):
+    if not request.user.is_superuser:
+        return render(request, "atencion/sin_acceso.html", status=403)
+    perfiles = PerfilAsesor.objects.select_related("usuario", "responsable").order_by(
+        "usuario__first_name", "usuario__last_name"
+    )
+    return render(request, "atencion/asesores.html", {"perfiles": perfiles})
+
+
+@login_required
+def asesor_editar(request, pk):
+    if not request.user.is_superuser:
+        return render(request, "atencion/sin_acceso.html", status=403)
+    perfil = get_object_or_404(
+        PerfilAsesor.objects.select_related("usuario", "responsable"), pk=pk
+    )
+    antes = serializar(perfil.usuario)
+    form = AsesorEmailForm(request.POST or None, instance=perfil.usuario)
+    if request.method == "POST" and form.is_valid():
+        user = form.save()
+        auditar(
+            request,
+            "editar",
+            user,
+            antes=antes,
+            descripcion=f"Cuenta del asesor {perfil.responsable.nombre} actualizada",
+        )
+        messages.success(request, "Cuenta del asesor actualizada correctamente.")
+        return redirect("atencion:asesores")
+    return render(
+        request,
+        "atencion/asesor_form.html",
+        {"form": form, "perfil": perfil},
     )

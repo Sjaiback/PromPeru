@@ -29,5 +29,11 @@ urlpatterns = [
     ),
     path("panel/auditoria/", views.auditoria, name="auditoria"),
     path("panel/configuracion/", views.configuracion, name="configuracion"),
+    path("panel/configuracion/asesores/", views.asesores, name="asesores"),
+    path(
+        "panel/configuracion/asesores/<int:pk>/",
+        views.asesor_editar,
+        name="asesor_editar",
+    ),
     path("api/empresa/", views.buscar_documento, name="buscar_documento"),
 ]

@@ -26,4 +26,13 @@
     <p class="muted">Estos catálogos alimentan los formularios. Su edición se habilitará en esta pantalla cuando se definan los usuarios finales y permisos de cada asesor.</p>
   </article>
 </section>
+{% if user.is_superuser %}
+<section class="detail-grid">
+  <article class="detail-card">
+    <h2>Gestión de asesores</h2>
+    <p>Administra las cuentas internas, sus correos y el estado de acceso de cada asesor.</p>
+    <a class="btn btn-primary" href="{% url 'atencion:asesores' %}">Gestionar asesores →</a>
+  </article>
+</section>
+{% endif %}
 {% endblock %}
