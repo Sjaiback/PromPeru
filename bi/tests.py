@@ -67,3 +67,10 @@ class ArchivoMensualTests(TestCase):
         self.assertTrue(Empresa.objects.filter(pk=self.empresa.pk).exists())
         archivo.refresh_from_db()
         self.assertTrue(archivo.depurado)
+
+    def test_dashboard_renderiza_graficos_interactivos(self):
+        response = self.client.get(reverse("bi:dashboard"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Dashboards")
+        self.assertContains(response, "dashboard-chart-data")
+        self.assertContains(response, "trendChart")

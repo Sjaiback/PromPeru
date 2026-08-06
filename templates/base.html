@@ -90,7 +90,7 @@
 
                 {% if user.is_superuser or user.perfil_asesor.acceso_bi %}
                     <a href="{% url 'bi:dashboard' %}">
-                        Inteligencia de negocios
+                        Dashboards
                     </a>
                 {% endif %}
 
@@ -204,6 +204,8 @@
         {% endblock %}
 
     </main>
+
+    {% block extra_scripts %}{% endblock %}
 
 </body>
 </html>

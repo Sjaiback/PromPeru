@@ -693,6 +693,27 @@ tr:last-child td {
   gap: 16px;
   margin-top: 18px;
 }
+.dashboard-head { margin-bottom: 25px; }
+.dashboard-kpis { display:grid; grid-template-columns:1.35fr repeat(3,1fr); gap:16px; margin:20px 0 18px; }
+.dashboard-kpis article { min-height:154px; border:1px solid var(--line); border-radius:22px; background:#fff; padding:22px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.dashboard-kpis span,.dashboard-kpis small { display:block; color:var(--muted); font-size:12px; }
+.dashboard-kpis strong { display:block; margin:9px 0 4px; font:600 39px/1 "Manrope"; letter-spacing:-.05em; }
+.dashboard-kpis strong em { font-size:.53em; font-style:normal; }
+.dashboard-kpis .kpi-featured { color:#fff; border:0; background:linear-gradient(135deg,#1b1b1b,#32302d); }
+.dashboard-kpis .kpi-featured span,.dashboard-kpis .kpi-featured small { color:#d7d4cf; }
+.dashboard-kpis .kpi-featured i { position:absolute; right:22px; bottom:-17px; color:var(--red); font:700 100px/1 "Manrope"; font-style:normal; opacity:.95; }
+.dashboard-grid { display:grid; gap:16px; margin:16px 0; }
+.dashboard-grid-primary { grid-template-columns:1.65fr 1fr; }
+.dashboard-grid-secondary { grid-template-columns:repeat(2,1fr); }
+.visual-card { min-height:320px; padding:26px; border:1px solid var(--line); border-radius:24px; background:#fff; box-shadow:var(--shadow); }
+.visual-trend { min-height:360px; }
+.visual-heading { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; }
+.visual-heading h2,.dashboard-tables h2 { margin:4px 0 0; font:600 20px "Manrope"; letter-spacing:-.03em; }
+.visual-badge { padding:6px 10px; border-radius:999px; background:var(--soft-red); color:var(--red); font-size:11px; font-weight:700; }
+.canvas-wrap { height:245px; position:relative; margin-top:18px; }
+.visual-trend .canvas-wrap { height:278px; }
+.canvas-donut { max-width:300px; margin-left:auto; margin-right:auto; }
+.dashboard-tables { margin-top:18px; }
 .bars {
   display: grid;
   gap: 13px;
@@ -973,6 +994,8 @@ code {
   .mapping-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+  .dashboard-kpis { grid-template-columns:repeat(2,1fr); }
+  .dashboard-grid-primary { grid-template-columns:1fr; }
 }
 @media (max-width: 700px) {
   .public-nav {
@@ -999,6 +1022,8 @@ code {
   .work-grid,
   .split-tables,
   .chart-grid,
+  .dashboard-grid-secondary,
+  .dashboard-kpis,
   .kpi-grid,
   .filter-grid,
   .evaluation-grid,

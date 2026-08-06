@@ -4,6 +4,7 @@ from io import BytesIO
 import hashlib, zipfile
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F, Q
+from django.db.models.functions import TruncDate
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
@@ -94,6 +95,36 @@ def dashboard(request):
         .distinct()
         .order_by("-empresa__rating__total")[:15]
     )
+    tendencia = list(
+        qs.annotate(dia=TruncDate("fecha"))
+        .values("dia")
+        .annotate(total=Count("id"))
+        .order_by("dia")
+    )
+
+    def chart_values(data, key):
+        return {
+            "labels": [item.get(key) or "Sin dato" for item in data],
+            "values": [item["total"] for item in data],
+        }
+
+    chart_data = {
+        "tendencia": {
+            "labels": [item["dia"].isoformat() for item in tendencia],
+            "values": [item["total"] for item in tendencia],
+        },
+        "canales": chart_values(series(qs, "tipo_atencion", "Canal"), "label"),
+        "responsables": chart_values(
+            series(qs, "responsable__nombre", "Responsable"), "label"
+        ),
+        "regiones": chart_values(series(qs, "empresa__region__nombre", "Región"), "label"),
+        "sectores": chart_values(series(qs, "empresa__sector__nombre", "Sector"), "label"),
+        "estados": {
+            "labels": [item["estado__nombre"] or "Sin estado" for item in estados],
+            "values": [item["total"] for item in estados],
+            "colors": [item["estado__color"] or "#d91023" for item in estados],
+        },
+    }
     context = {
         "total": total,
         "estados": estados,
@@ -109,6 +140,7 @@ def dashboard(request):
         "responsables": Responsable.objects.filter(activo=True),
         "sectores": Sector.objects.filter(activo=True),
         "filtros": request.GET,
+        "chart_data": chart_data,
     }
     return render(request, "bi/dashboard.html", context)
 
