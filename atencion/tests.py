@@ -129,6 +129,10 @@ class FlujoAtencionTests(TestCase):
         self.assertEqual(response.status_code, 403)
 
     def test_admin_django_solo_admite_cuenta_de_sistemas(self):
+        response = self.client.get("/admin/")
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "No deberías estar aquí", status_code=403)
+
         self.user.is_staff = True
         self.user.is_superuser = True
         self.user.save(update_fields=["is_staff", "is_superuser"])

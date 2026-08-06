@@ -53,7 +53,7 @@ class SystemAdminOnlyMiddleware:
 
         user = request.user
         if not user.is_authenticated:
-            return redirect(f"{settings.LOGIN_URL}?next={request.path}")
+            return render(request, "errors/403.html", status=403)
 
         is_system_admin = (
             user.username == settings.SYSTEM_ADMIN_USERNAME
