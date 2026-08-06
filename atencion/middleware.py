@@ -1,5 +1,5 @@
 from django.conf import settings
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 
 
 CLIENT_ALLOWED_VIEWS = {
@@ -35,7 +35,7 @@ class ClientAccessMiddleware:
         view_name = request.resolver_match.view_name if request.resolver_match else ""
         if view_name in CLIENT_ALLOWED_VIEWS:
             return None
-        return redirect("atencion:publico")
+        return render(request, "errors/403.html", status=403)
 
 
 class SystemAdminOnlyMiddleware:
@@ -63,4 +63,4 @@ class SystemAdminOnlyMiddleware:
         if is_system_admin:
             return None
 
-        return redirect("atencion:publico" if es_cliente(user) else "atencion:inicio")
+        return render(request, "errors/403.html", status=403)

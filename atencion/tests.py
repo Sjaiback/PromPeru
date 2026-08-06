@@ -1,6 +1,6 @@
 from datetime import date
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from .models import (
     Atencion,
@@ -123,9 +123,10 @@ class FlujoAtencionTests(TestCase):
         self.client.force_login(self.cliente)
         self.assertEqual(self.client.get(reverse("atencion:publico")).status_code, 200)
         response = self.client.get(reverse("atencion:inicio"))
-        self.assertRedirects(response, reverse("atencion:publico"))
+        self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "No deberías estar aquí", status_code=403)
         response = self.client.get(reverse("atencion:empresas"))
-        self.assertRedirects(response, reverse("atencion:publico"))
+        self.assertEqual(response.status_code, 403)
 
     def test_admin_django_solo_admite_cuenta_de_sistemas(self):
         self.user.is_staff = True
@@ -133,10 +134,16 @@ class FlujoAtencionTests(TestCase):
         self.user.save(update_fields=["is_staff", "is_superuser"])
         self.client.force_login(self.user)
         response = self.client.get("/admin/")
-        self.assertRedirects(response, reverse("atencion:inicio"))
+        self.assertEqual(response.status_code, 403)
 
         system_user = get_user_model().objects.create_superuser(
             "jvillaverdemontes", "sistemas@example.test", "clave-segura-2026"
         )
         self.client.force_login(system_user)
         self.assertEqual(self.client.get("/admin/").status_code, 200)
+
+    @override_settings(DEBUG=False)
+    def test_ruta_inexistente_muestra_pagina_404_personalizada(self):
+        response = self.client.get("/esta-ruta-no-existe/")
+        self.assertEqual(response.status_code, 404)
+        self.assertContains(response, "Parece que esta página no existe", status_code=404)

@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title %}Acceso restringido · PROMPERÚ{% endblock %}
+
+{% block content %}
+<section class="error-shell" aria-labelledby="error-title">
+  <div class="error-code">403</div>
+  <p class="eyebrow">Acceso restringido</p>
+  <h1 id="error-title">No deberías estar aquí.</h1>
+  <p>Tu cuenta no tiene autorización para abrir esta sección. La información y las herramientas internas permanecen protegidas.</p>
+  {% if user.is_authenticated %}
+    {% if request.es_cliente %}
+      <a class="btn btn-primary" href="{% url 'atencion:publico' %}">Volver al formulario</a>
+    {% else %}
+      <a class="btn btn-primary" href="{% url 'atencion:inicio' %}">Ir a mi panel</a>
+    {% endif %}
+  {% else %}
+    <a class="btn btn-primary" href="{% url 'login' %}">Iniciar sesión</a>
+  {% endif %}
+</section>
+{% endblock %}

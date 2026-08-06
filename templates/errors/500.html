@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block title %}Estamos revisándolo · PROMPERÚ{% endblock %}
+
+{% block content %}
+<section class="error-shell" aria-labelledby="error-title">
+  <div class="error-code">500</div>
+  <p class="eyebrow">Error temporal</p>
+  <h1 id="error-title">Algo no salió como esperaba.</h1>
+  <p>No necesitas hacer nada más por ahora. Vuelve a intentarlo en unos minutos o comunícalo al equipo de sistemas.</p>
+  <a class="btn btn-primary" href="{% url 'atencion:publico' %}">Volver al inicio</a>
+</section>
+{% endblock %}
