@@ -1,10 +1,10 @@
 from collections import Counter
-from datetime import datetime
+from datetime import datetime, timedelta
 from io import BytesIO
 import hashlib, zipfile
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Avg, Count, DurationField, ExpressionWrapper, F, Q
-from django.db.models.functions import TruncDate
+from django.db.models.functions import TruncDate, TruncMonth, TruncWeek
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.contrib import messages
@@ -95,12 +95,21 @@ def dashboard(request):
         .distinct()
         .order_by("-empresa__rating__total")[:15]
     )
-    tendencia = list(
-        qs.annotate(dia=TruncDate("fecha"))
-        .values("dia")
-        .annotate(total=Count("id"))
-        .order_by("dia")
-    )
+    hoy = timezone.localdate()
+
+    def tendencia(periodo, truncar, inicio):
+        data = list(
+            qs.filter(fecha__gte=inicio)
+            .annotate(periodo=truncar("fecha"))
+            .values("periodo")
+            .annotate(total=Count("id"))
+            .order_by("periodo")
+        )
+        return {
+            "labels": [item["periodo"].isoformat() for item in data],
+            "values": [item["total"] for item in data],
+            "periodo": periodo,
+        }
 
     def chart_values(data, key):
         return {
@@ -109,9 +118,10 @@ def dashboard(request):
         }
 
     chart_data = {
-        "tendencia": {
-            "labels": [item["dia"].isoformat() for item in tendencia],
-            "values": [item["total"] for item in tendencia],
+        "tendencias": {
+            "dia": tendencia("dia", TruncDate, hoy - timedelta(days=29)),
+            "semana": tendencia("semana", TruncWeek, hoy - timedelta(days=83)),
+            "mes": tendencia("mes", TruncMonth, hoy - timedelta(days=364)),
         },
         "canales": chart_values(series(qs, "tipo_atencion", "Canal"), "label"),
         "responsables": chart_values(

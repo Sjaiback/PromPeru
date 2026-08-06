@@ -32,19 +32,21 @@
 <section class="dashboard-grid dashboard-grid-primary">
   <article class="visual-card visual-trend">
     <div class="visual-heading"><div><span class="eyebrow">Evolución</span><h2>Atenciones en el tiempo</h2></div><span class="visual-badge">Actualizado</span></div>
+    <div class="chart-periods" role="group" aria-label="Periodo de evolución"><button class="is-active" type="button" data-chart-period="dia">Día <small>30 días</small></button><button type="button" data-chart-period="semana">Semana</button><button type="button" data-chart-period="mes">Mes</button></div>
     <div class="canvas-wrap"><canvas id="trendChart" aria-label="Evolución de atenciones" role="img"></canvas></div>
   </article>
   <article class="visual-card visual-donut">
     <div class="visual-heading"><div><span class="eyebrow">Seguimiento</span><h2>Estado de atención</h2></div></div>
     <div class="canvas-wrap canvas-donut"><canvas id="statusChart" aria-label="Estado de las atenciones" role="img"></canvas></div>
+    <div class="chart-key" data-summary="estados"></div>
   </article>
 </section>
 
 <section class="dashboard-grid dashboard-grid-secondary">
-  <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Origen</span><h2>Canales de atención</h2></div></div><div class="canvas-wrap"><canvas id="channelChart" aria-label="Canales de atención" role="img"></canvas></div></article>
-  <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Equipo</span><h2>Carga por responsable</h2></div></div><div class="canvas-wrap"><canvas id="advisorChart" aria-label="Carga por responsable" role="img"></canvas></div></article>
-  <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Territorio</span><h2>Atenciones por región</h2></div></div><div class="canvas-wrap"><canvas id="regionChart" aria-label="Atenciones por región" role="img"></canvas></div></article>
-  <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Oferta</span><h2>Sectores económicos</h2></div></div><div class="canvas-wrap"><canvas id="sectorChart" aria-label="Sectores económicos" role="img"></canvas></div></article>
+  <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Origen</span><h2>Canales de atención</h2></div></div><div class="canvas-wrap"><canvas id="channelChart" aria-label="Canales de atención" role="img"></canvas></div><div class="chart-key" data-summary="canales"></div></article>
+  <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Equipo</span><h2>Carga por responsable</h2></div></div><div class="canvas-wrap"><canvas id="advisorChart" aria-label="Carga por responsable" role="img"></canvas></div><div class="chart-key" data-summary="responsables"></div></article>
+  <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Territorio</span><h2>Atenciones por región</h2></div></div><div class="canvas-wrap"><canvas id="regionChart" aria-label="Atenciones por región" role="img"></canvas></div><div class="chart-key" data-summary="regiones"></div></article>
+  <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Oferta</span><h2>Sectores económicos</h2></div></div><div class="canvas-wrap"><canvas id="sectorChart" aria-label="Sectores económicos" role="img"></canvas></div><div class="chart-key" data-summary="sectores"></div></article>
 </section>
 
 <section class="split-tables dashboard-tables">
@@ -56,5 +58,5 @@
 {% endblock %}
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
-<script src="{% static 'js/dashboard.js' %}?v=20260806-1"></script>
+<script src="{% static 'js/dashboard.js' %}?v=20260806-2"></script>
 {% endblock %}

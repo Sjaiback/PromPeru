@@ -74,3 +74,6 @@ class ArchivoMensualTests(TestCase):
         self.assertContains(response, "Dashboards")
         self.assertContains(response, "dashboard-chart-data")
         self.assertContains(response, "trendChart")
+        self.assertContains(response, 'data-chart-period="dia"')
+        self.assertContains(response, 'data-chart-period="semana"')
+        self.assertContains(response, 'data-chart-period="mes"')
