@@ -10,6 +10,8 @@ services:
         value: "0"
       - key: DJANGO_SECRET_KEY
         generateValue: true
+      - key: DJANGO_SYSTEM_ADMIN_USERNAME
+        value: jvillaverdemontes
       - key: DB_SSLMODE
         value: require
       - key: DB_PORT

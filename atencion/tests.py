@@ -126,3 +126,17 @@ class FlujoAtencionTests(TestCase):
         self.assertRedirects(response, reverse("atencion:publico"))
         response = self.client.get(reverse("atencion:empresas"))
         self.assertRedirects(response, reverse("atencion:publico"))
+
+    def test_admin_django_solo_admite_cuenta_de_sistemas(self):
+        self.user.is_staff = True
+        self.user.is_superuser = True
+        self.user.save(update_fields=["is_staff", "is_superuser"])
+        self.client.force_login(self.user)
+        response = self.client.get("/admin/")
+        self.assertRedirects(response, reverse("atencion:inicio"))
+
+        system_user = get_user_model().objects.create_superuser(
+            "jvillaverdemontes", "sistemas@example.test", "clave-segura-2026"
+        )
+        self.client.force_login(system_user)
+        self.assertEqual(self.client.get("/admin/").status_code, 200)

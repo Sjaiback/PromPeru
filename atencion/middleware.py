@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import redirect
 
 
@@ -35,3 +36,31 @@ class ClientAccessMiddleware:
         if view_name in CLIENT_ALLOWED_VIEWS:
             return None
         return redirect("atencion:publico")
+
+
+class SystemAdminOnlyMiddleware:
+    """Reserve Django's technical admin for the designated system account."""
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        return self.get_response(request)
+
+    def process_view(self, request, view_func, view_args, view_kwargs):
+        if not request.path.startswith("/admin/"):
+            return None
+
+        user = request.user
+        if not user.is_authenticated:
+            return redirect(f"{settings.LOGIN_URL}?next={request.path}")
+
+        is_system_admin = (
+            user.username == settings.SYSTEM_ADMIN_USERNAME
+            and user.is_staff
+            and user.is_superuser
+        )
+        if is_system_admin:
+            return None
+
+        return redirect("atencion:publico" if es_cliente(user) else "atencion:inicio")

@@ -45,6 +45,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "atencion.middleware.ClientAccessMiddleware",
+    "atencion.middleware.SystemAdminOnlyMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -99,6 +100,9 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "atencion:inicio"
 LOGOUT_REDIRECT_URL = "atencion:publico"
+# The Django administration is reserved for the system programmer account.
+# Keep this value in Render's environment variables if the username ever changes.
+SYSTEM_ADMIN_USERNAME = os.environ.get("DJANGO_SYSTEM_ADMIN_USERNAME", "jvillaverdemontes")
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024
 
 # Small, process-local cache for stable catalogue data used by public forms.
