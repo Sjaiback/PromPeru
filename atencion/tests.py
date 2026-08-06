@@ -164,6 +164,7 @@ class FlujoAtencionTests(TestCase):
         self.assertRedirects(response, reverse("password_reset_done"))
         self.assertEqual(len(mail.outbox), 1)
         self.assertIn("restablecer", mail.outbox[0].body)
+        self.assertIn("PROMPERÚ", mail.outbox[0].alternatives[0].content)
 
     def test_aldo_puede_crear_cuentas_con_rol_limitado(self):
         aldo_responsable = Responsable.objects.create(
