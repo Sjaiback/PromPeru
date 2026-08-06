@@ -135,6 +135,7 @@ class FlujoAtencionTests(TestCase):
         self.client.force_login(self.user)
         response = self.client.get("/admin/")
         self.assertEqual(response.status_code, 403)
+        self.assertContains(response, "No deberías estar aquí", status_code=403)
 
         system_user = get_user_model().objects.create_superuser(
             "jvillaverdemontes", "sistemas@example.test", "clave-segura-2026"
