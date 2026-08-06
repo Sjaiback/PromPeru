@@ -9,6 +9,7 @@ from seguimiento.models import EstadoAtencion, GestionAtencion
 from .auditoria import registrar as auditar, serializar
 from .forms import AsesorEmailForm, AtencionEdicionForm, AtencionRegistroForm, EmpresaForm
 from .models import Atencion, Empresa, PerfilAsesor
+from .middleware import es_cliente
 
 
 def perfil_activo(user):
@@ -42,6 +43,7 @@ def form_registro(request, publico=False):
                 if publico
                 else "Atención registrada por asesor"
             ),
+            usar_actor_sesion=not publico,
         )
         if form.cleaned_data.get("actualizar_datos") and antes:
             auditar(
@@ -50,6 +52,7 @@ def form_registro(request, publico=False):
                 atencion.empresa,
                 antes=antes,
                 descripcion="Actualización de datos durante el registro",
+                usar_actor_sesion=not publico,
             )
         if publico:
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
@@ -71,10 +74,14 @@ def form_registro(request, publico=False):
     )
 
 
+@login_required
 def registro_publico(request):
+    if not es_cliente(request.user):
+        return redirect("atencion:inicio")
     return form_registro(request, publico=True)
 
 
+@login_required
 def gracias(request):
     return render(request, "atencion/gracias.html")
 
@@ -109,6 +116,7 @@ def detalle(request, pk):
     return render(request, "atencion/detalle.html", {"atencion": obj})
 
 
+@login_required
 @require_GET
 def buscar_documento(request):
     empresa = Empresa.objects.filter(

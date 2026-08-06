@@ -50,7 +50,7 @@
         aria-hidden="true"
     ></div>
 
-    {% if user.is_authenticated %}
+    {% if user.is_authenticated and not request.es_cliente %}
 
         <aside class="sidebar" id="sidebar">
 
@@ -170,10 +170,17 @@
                 <span>Macro Región Centro Este</span>
             </a>
 
-            <a class="btn btn-dark" href="{% url 'login' %}">
-                Acceso para asesores
-                <span aria-hidden="true">↗</span>
-            </a>
+            {% if request.es_cliente %}
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button class="btn btn-dark" type="submit">Salir</button>
+                </form>
+            {% else %}
+                <a class="btn btn-dark" href="{% url 'login' %}">
+                    Acceder al formulario
+                    <span aria-hidden="true">↗</span>
+                </a>
+            {% endif %}
 
         </header>
 
@@ -181,7 +188,7 @@
 
     <main
         id="contenido"
-        class="{% if user.is_authenticated %}app-main{% else %}public-main{% endif %}"
+        class="{% if user.is_authenticated and not request.es_cliente %}app-main{% else %}public-main{% endif %}"
     >
 
         {% if messages %}

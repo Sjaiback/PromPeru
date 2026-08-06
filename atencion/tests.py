@@ -26,6 +26,9 @@ class FlujoAtencionTests(TestCase):
         self.perfil = PerfilAsesor.objects.create(
             usuario=self.user, responsable=self.responsable, cargo="Analista"
         )
+        self.cliente = get_user_model().objects.create_user(
+            "cliente", password="cliente-seguro-2026"
+        )
 
     def payload_nuevo(self):
         return {
@@ -47,10 +50,14 @@ class FlujoAtencionTests(TestCase):
             "tema_consulta": "Orientación",
         }
 
-    def test_formulario_publico_no_requiere_login(self):
+    def test_formulario_publico_requiere_login_cliente(self):
+        response = self.client.get(reverse("atencion:publico"))
+        self.assertEqual(response.status_code, 302)
+        self.client.force_login(self.cliente)
         self.assertEqual(self.client.get(reverse("atencion:publico")).status_code, 200)
 
     def test_publico_crea_empresa_atencion_y_auditoria(self):
+        self.client.force_login(self.cliente)
         response = self.client.post(reverse("atencion:publico"), self.payload_nuevo())
         self.assertRedirects(response, reverse("atencion:gracias"))
         self.assertEqual(Empresa.objects.count(), 1)
@@ -58,6 +65,7 @@ class FlujoAtencionTests(TestCase):
         self.assertEqual(RegistroAuditoria.objects.get().actor, None)
 
     def test_cliente_existente_solo_responde_canal_y_responsable(self):
+        self.client.force_login(self.cliente)
         self.client.post(reverse("atencion:publico"), self.payload_nuevo())
         minimal = {
             "tipo_documento": "RUC",
@@ -82,6 +90,7 @@ class FlujoAtencionTests(TestCase):
         self.assertEqual(Atencion.objects.get().registrado_por, self.user)
 
     def test_api_no_expone_contacto_sin_actualizar(self):
+        self.client.force_login(self.cliente)
         self.client.post(reverse("atencion:publico"), self.payload_nuevo())
         data = self.client.get(
             reverse("atencion:buscar_documento"),
@@ -92,6 +101,7 @@ class FlujoAtencionTests(TestCase):
         self.assertNotIn("telefono", data)
 
     def test_auditoria_muestra_registros_del_formulario_publico(self):
+        self.client.force_login(self.cliente)
         self.client.post(reverse("atencion:publico"), self.payload_nuevo())
         self.user.is_staff = True
         self.user.is_superuser = True
@@ -108,3 +118,11 @@ class FlujoAtencionTests(TestCase):
         response = self.client.get(reverse("atencion:configuracion"))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Catálogos activos")
+
+    def test_cliente_solo_accede_al_formulario_publico(self):
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.client.get(reverse("atencion:publico")).status_code, 200)
+        response = self.client.get(reverse("atencion:inicio"))
+        self.assertRedirects(response, reverse("atencion:publico"))
+        response = self.client.get(reverse("atencion:empresas"))
+        self.assertRedirects(response, reverse("atencion:publico"))

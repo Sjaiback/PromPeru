@@ -19,14 +19,23 @@ def serializar(obj):
 
 
 def registrar(
-    request, accion, obj=None, entidad=None, antes=None, despues=None, descripcion=""
+    request,
+    accion,
+    obj=None,
+    entidad=None,
+    antes=None,
+    despues=None,
+    descripcion="",
+    usar_actor_sesion=True,
 ):
     forwarded = request.META.get("HTTP_X_FORWARDED_FOR", "").split(",")[0].strip()
     ip = forwarded or request.META.get("REMOTE_ADDR")
     return RegistroAuditoria.objects.create(
         actor=(
             request.user
-            if getattr(request, "user", None) and request.user.is_authenticated
+            if usar_actor_sesion
+            and getattr(request, "user", None)
+            and request.user.is_authenticated
             else None
         ),
         accion=accion,
