@@ -108,7 +108,9 @@
                     <a href="{% url 'rating:importar' %}">
                         Importar rating
                     </a>
+                {% endif %}
 
+                {% if user.is_staff or puede_gestionar_usuarios %}
                     <a href="{% url 'atencion:configuracion' %}">
                         Configuración
                     </a>

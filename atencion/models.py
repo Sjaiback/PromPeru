@@ -80,6 +80,7 @@ class Responsable(CatalogoBase):
 class PerfilAsesor(models.Model):
     ROLES = [
         ("asesor", "Asesor"),
+        ("coordinador", "Coordinador"),
         ("bi", "Administrador / BI"),
         ("admin", "Administrador general"),
     ]

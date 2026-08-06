@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.utils import timezone
-from .models import Atencion, Empresa, Region, Responsable, Sector
+from .models import Atencion, Empresa, PerfilAsesor, Region, Responsable, Sector
 
 DETALLE_EMPRESA = [
     "sector",
@@ -245,3 +245,72 @@ class AsesorEmailForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         for field in self.fields.values():
             field.widget.attrs.setdefault("class", "form-control")
+
+
+class UsuarioInternoForm(forms.Form):
+    """Provision an internal account without exposing technical admin controls."""
+
+    first_name = forms.CharField(label="Nombres", max_length=150)
+    last_name = forms.CharField(label="Apellidos", max_length=150)
+    username = forms.CharField(label="Usuario", max_length=150)
+    email = forms.EmailField(label="Correo electrónico")
+    password = forms.CharField(
+        label="Contraseña temporal",
+        min_length=8,
+        widget=forms.PasswordInput(render_value=False),
+        help_text="El usuario podrá cambiarla después con “Olvidé mi contraseña”.",
+    )
+    responsable = forms.ModelChoiceField(
+        label="Responsable asociado",
+        queryset=Responsable.objects.none(),
+        empty_label="Seleccionar responsable",
+    )
+    documento = forms.CharField(label="Documento", max_length=30, required=False)
+    cargo = forms.CharField(label="Cargo", max_length=150, required=False)
+    rol = forms.ChoiceField(
+        label="Rol de acceso",
+        choices=[("asesor", "Asesor"), ("coordinador", "Coordinador")],
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["responsable"].queryset = Responsable.objects.filter(
+            activo=True, perfil__isnull=True, usuario__isnull=True
+        ).order_by("nombre")
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "form-control")
+
+    def clean_username(self):
+        username = self.cleaned_data["username"].strip()
+        if get_user_model().objects.filter(username__iexact=username).exists():
+            raise forms.ValidationError("Este usuario ya está registrado.")
+        return username
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        if get_user_model().objects.filter(email__iexact=email).exists():
+            raise forms.ValidationError("Este correo ya está registrado.")
+        return email
+
+    def save(self):
+        data = self.cleaned_data
+        user = get_user_model().objects.create_user(
+            username=data["username"],
+            first_name=data["first_name"],
+            last_name=data["last_name"],
+            email=data["email"],
+            password=data["password"],
+            is_active=True,
+        )
+        responsable = data["responsable"]
+        responsable.usuario = user
+        responsable.save(update_fields=["usuario"])
+        perfil = PerfilAsesor.objects.create(
+            usuario=user,
+            responsable=responsable,
+            documento=data["documento"],
+            cargo=data["cargo"],
+            rol=data["rol"],
+            activo=True,
+        )
+        return user, perfil

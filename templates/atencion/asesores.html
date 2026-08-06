@@ -3,9 +3,9 @@
   <div>
     <span class="eyebrow">Configuración</span>
     <h1>Gestión de asesores</h1>
-    <p>Solo el administrador general puede modificar las cuentas internas.</p>
+    <p>El administrador de sistemas y el coordinador autorizado pueden administrar cuentas internas.</p>
   </div>
-  <a class="btn btn-ghost" href="{% url 'atencion:configuracion' %}">Volver</a>
+  <div class="form-actions"><a class="btn btn-ghost" href="{% url 'atencion:configuracion' %}">Volver</a><a class="btn btn-primary" href="{% url 'atencion:asesor_crear' %}">+ Crear cuenta</a></div>
 </header>
 <div class="table-wrap"><table>
   <thead><tr><th>Asesor</th><th>Usuario</th><th>Correo</th><th>Rol</th><th>Estado</th><th></th></tr></thead>

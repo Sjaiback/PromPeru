@@ -31,6 +31,11 @@ urlpatterns = [
     path("panel/configuracion/", views.configuracion, name="configuracion"),
     path("panel/configuracion/asesores/", views.asesores, name="asesores"),
     path(
+        "panel/configuracion/asesores/nuevo/",
+        views.asesor_crear,
+        name="asesor_crear",
+    ),
+    path(
         "panel/configuracion/asesores/<int:pk>/",
         views.asesor_editar,
         name="asesor_editar",

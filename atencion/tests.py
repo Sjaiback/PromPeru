@@ -1,5 +1,6 @@
 from datetime import date
 from django.contrib.auth import get_user_model
+from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from .models import (
@@ -152,3 +153,51 @@ class FlujoAtencionTests(TestCase):
         response = self.client.get("/esta-ruta-no-existe/")
         self.assertEqual(response.status_code, 404)
         self.assertContains(response, "Parece que esta página no existe", status_code=404)
+
+    @override_settings(EMAIL_BACKEND="django.core.mail.backends.locmem.EmailBackend")
+    def test_recuperacion_de_contrasena_envia_enlace_al_correo_registrado(self):
+        self.user.email = "asesor@example.test"
+        self.user.save(update_fields=["email"])
+        response = self.client.post(
+            reverse("password_reset"), {"email": "asesor@example.test"}
+        )
+        self.assertRedirects(response, reverse("password_reset_done"))
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertIn("restablecer", mail.outbox[0].body)
+
+    def test_aldo_puede_crear_cuentas_con_rol_limitado(self):
+        aldo_responsable = Responsable.objects.create(
+            nombre="Coordinador - Aldo Palomino"
+        )
+        aldo = get_user_model().objects.create_user("aldo", password="clave-ald0")
+        PerfilAsesor.objects.create(
+            usuario=aldo,
+            responsable=aldo_responsable,
+            rol="coordinador",
+            activo=True,
+        )
+        nuevo_responsable = Responsable.objects.create(nombre="Nueva asesora")
+        self.client.force_login(aldo)
+        response = self.client.post(
+            reverse("atencion:asesor_crear"),
+            {
+                "first_name": "Ana",
+                "last_name": "López",
+                "username": "ana.lopez",
+                "email": "ana.lopez@example.test",
+                "password": "temporal-segura-2026",
+                "responsable": nuevo_responsable.pk,
+                "documento": "12345678",
+                "cargo": "Asesora comercial",
+                "rol": "asesor",
+            },
+        )
+        self.assertRedirects(response, reverse("atencion:asesores"))
+        perfil_nuevo = PerfilAsesor.objects.get(usuario__username="ana.lopez")
+        self.assertEqual(perfil_nuevo.rol, "asesor")
+        self.assertEqual(perfil_nuevo.responsable, nuevo_responsable)
+
+        self.client.force_login(self.user)
+        self.assertEqual(
+            self.client.get(reverse("atencion:asesor_crear")).status_code, 403
+        )

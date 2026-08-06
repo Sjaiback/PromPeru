@@ -60,6 +60,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "atencion.context_processors.permisos",
             ]
         },
     }
@@ -104,6 +105,19 @@ LOGOUT_REDIRECT_URL = "atencion:publico"
 # Keep this value in Render's environment variables if the username ever changes.
 SYSTEM_ADMIN_USERNAME = os.environ.get("DJANGO_SYSTEM_ADMIN_USERNAME", "jvillaverdemontes")
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024
+
+EMAIL_BACKEND = os.environ.get(
+    "DJANGO_EMAIL_BACKEND",
+    "django.core.mail.backends.console.EmailBackend"
+    if DEBUG
+    else "django.core.mail.backends.smtp.EmailBackend",
+)
+EMAIL_HOST = os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT = int(os.environ.get("EMAIL_PORT", "587"))
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD", "")
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS", "1") == "1"
+DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "no-reply@promperu.gob.pe")
 
 # Small, process-local cache for stable catalogue data used by public forms.
 CACHES = {

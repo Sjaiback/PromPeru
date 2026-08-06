@@ -1,15 +1,23 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
+from django.db import transaction
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
 from seguimiento.models import EstadoAtencion, GestionAtencion
 from .auditoria import registrar as auditar, serializar
-from .forms import AsesorEmailForm, AtencionEdicionForm, AtencionRegistroForm, EmpresaForm
+from .forms import (
+    AsesorEmailForm,
+    AtencionEdicionForm,
+    AtencionRegistroForm,
+    EmpresaForm,
+    UsuarioInternoForm,
+)
 from .models import Atencion, Empresa, PerfilAsesor
 from .middleware import es_cliente
+from .permisos import puede_gestionar_usuarios
 
 
 def error_403(request, exception=None):
@@ -276,7 +284,7 @@ def auditoria(request):
 @login_required
 def configuracion(request):
     """Internal settings overview; Django's technical admin remains off-menu."""
-    if not request.user.is_staff and not request.user.is_superuser:
+    if not request.user.is_staff and not puede_gestionar_usuarios(request.user):
         return render(request, "atencion/sin_acceso.html", status=403)
     from .models import Region, Responsable, Sector
 
@@ -288,13 +296,14 @@ def configuracion(request):
             "total_responsables": Responsable.objects.filter(activo=True).count(),
             "total_regiones": Region.objects.filter(activo=True).count(),
             "total_sectores": Sector.objects.filter(activo=True).count(),
+            "puede_gestionar_usuarios": puede_gestionar_usuarios(request.user),
         },
     )
 
 
 @login_required
 def asesores(request):
-    if not request.user.is_superuser:
+    if not puede_gestionar_usuarios(request.user):
         return render(request, "atencion/sin_acceso.html", status=403)
     perfiles = PerfilAsesor.objects.select_related("usuario", "responsable").order_by(
         "usuario__first_name", "usuario__last_name"
@@ -303,8 +312,30 @@ def asesores(request):
 
 
 @login_required
+def asesor_crear(request):
+    if not puede_gestionar_usuarios(request.user):
+        return render(request, "atencion/sin_acceso.html", status=403)
+    form = UsuarioInternoForm(request.POST or None)
+    if request.method == "POST" and form.is_valid():
+        with transaction.atomic():
+            user, perfil = form.save()
+        auditar(
+            request,
+            "crear",
+            user,
+            descripcion=(
+                f"Cuenta interna creada para {perfil.responsable.nombre} "
+                f"con rol {perfil.get_rol_display()}"
+            ),
+        )
+        messages.success(request, "Cuenta creada correctamente.")
+        return redirect("atencion:asesores")
+    return render(request, "atencion/asesor_crear.html", {"form": form})
+
+
+@login_required
 def asesor_editar(request, pk):
-    if not request.user.is_superuser:
+    if not puede_gestionar_usuarios(request.user):
         return render(request, "atencion/sin_acceso.html", status=403)
     perfil = get_object_or_404(
         PerfilAsesor.objects.select_related("usuario", "responsable"), pk=pk

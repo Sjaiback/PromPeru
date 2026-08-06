@@ -396,6 +396,34 @@ textarea {
 .success-shell .btn {
   margin-top: 28px;
 }
+.login-recovery {
+  margin: 18px 0 0;
+  text-align: right;
+  font-size: 13px;
+  font-weight: 700;
+}
+.login-recovery a,
+.text-link {
+  color: var(--red-dark);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.auth-help-form {
+  width: min(100%, 480px);
+  margin-top: 28px;
+}
+.auth-help-form label {
+  display: grid;
+  gap: 7px;
+  font-weight: 700;
+}
+.auth-help-form .form-control,
+.auth-help-form input {
+  width: 100%;
+}
+.auth-help .text-link {
+  margin-top: 24px;
+}
 .error-shell {
   min-height: 64vh;
   max-width: 720px;

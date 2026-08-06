@@ -1,6 +1,13 @@
 from django.contrib import admin
-from django.contrib.auth.views import LoginView, LogoutView
-from django.urls import include, path
+from django.contrib.auth.views import (
+    LoginView,
+    LogoutView,
+    PasswordResetCompleteView,
+    PasswordResetConfirmView,
+    PasswordResetDoneView,
+    PasswordResetView,
+)
+from django.urls import include, path, reverse_lazy
 from django.conf import settings
 from django.conf.urls.static import static
 
@@ -28,6 +35,36 @@ urlpatterns = [
         name="login",
     ),
     path("cuentas/salir/", LogoutView.as_view(), name="logout"),
+    path(
+        "cuentas/recuperar/",
+        PasswordResetView.as_view(
+            template_name="registration/password_reset_form.html",
+            email_template_name="registration/password_reset_email.txt",
+            subject_template_name="registration/password_reset_subject.txt",
+            success_url=reverse_lazy("password_reset_done"),
+        ),
+        name="password_reset",
+    ),
+    path(
+        "cuentas/recuperar/enviado/",
+        PasswordResetDoneView.as_view(template_name="registration/password_reset_done.html"),
+        name="password_reset_done",
+    ),
+    path(
+        "cuentas/restablecer/<uidb64>/<token>/",
+        PasswordResetConfirmView.as_view(
+            template_name="registration/password_reset_confirm.html",
+            success_url=reverse_lazy("password_reset_complete"),
+        ),
+        name="password_reset_confirm",
+    ),
+    path(
+        "cuentas/restablecer/completo/",
+        PasswordResetCompleteView.as_view(
+            template_name="registration/password_reset_complete.html"
+        ),
+        name="password_reset_complete",
+    ),
     path("", include("atencion.urls")),
     path("seguimiento/", include("seguimiento.urls")),
     path("rating/", include("rating.urls")),
