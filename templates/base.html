@@ -175,11 +175,6 @@
                     {% csrf_token %}
                     <button class="btn btn-dark" type="submit">Salir</button>
                 </form>
-            {% else %}
-                <a class="btn btn-dark" href="{% url 'login' %}">
-                    Acceder al formulario
-                    <span aria-hidden="true">↗</span>
-                </a>
             {% endif %}
 
         </header>
