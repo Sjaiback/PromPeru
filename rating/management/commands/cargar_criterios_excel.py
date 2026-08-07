@@ -56,9 +56,9 @@ class Command(BaseCommand):
                 continue
             if question in ("#REF!", "RATING") or category == "TOTAL":
                 continue
-            label = (
-                question if not group or group == question else f"{group} — {question}"
-            )
+            # La cabecera de grupo se guarda en ``ayuda`` y se presenta una
+            # sola vez en el formulario. El criterio debe ser solo la pregunta.
+            label = question
             cat, _ = CategoriaRating.objects.get_or_create(
                 nombre=category[:180],
                 defaults={
