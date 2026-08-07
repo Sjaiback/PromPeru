@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block title %}Mi perfil · PROMPERÚ{% endblock %}
+{% block content %}
+<header class="page-head compact">
+  <div>
+    <span class="eyebrow">Cuenta personal</span>
+    <h1>Mi perfil</h1>
+    <p>Actualiza tus datos personales o cambia tu contraseña de acceso.</p>
+  </div>
+</header>
+<div class="profile-settings-grid">
+  <section class="form-card">
+    <h2>Datos personales</h2>
+    <p class="form-intro">Usuario: <strong>{{ user.username }}</strong></p>
+    <form method="post" class="stack">
+      {% csrf_token %}<input type="hidden" name="accion" value="datos">
+      {% for field in datos_form %}<label><span>{{ field.label }}</span>{{ field }}{{ field.errors }}</label>{% endfor %}
+      <div class="form-actions"><button class="btn btn-primary" type="submit">Guardar datos</button></div>
+    </form>
+  </section>
+  <section class="form-card">
+    <h2>Cambiar contraseña</h2>
+    <p class="form-intro">Primero confirma tu contraseña actual.</p>
+    <form method="post" class="stack">
+      {% csrf_token %}<input type="hidden" name="accion" value="password">
+      {% for field in password_form %}<label><span>{{ field.label }}</span>{{ field }}{% if field.help_text %}<small>{{ field.help_text|safe }}</small>{% endif %}{{ field.errors }}</label>{% endfor %}
+      <div class="form-actions"><button class="btn btn-dark" type="submit">Actualizar contraseña</button></div>
+    </form>
+  </section>
+</div>
+{% endblock %}

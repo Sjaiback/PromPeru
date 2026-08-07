@@ -247,6 +247,51 @@ class AsesorEmailForm(forms.ModelForm):
             field.widget.attrs.setdefault("class", "form-control")
 
 
+class MiPerfilForm(forms.Form):
+    first_name = forms.CharField(label="Nombres", max_length=150)
+    last_name = forms.CharField(label="Apellidos", max_length=150)
+    email = forms.EmailField(label="Correo electrónico")
+    documento = forms.CharField(label="Documento", max_length=30, required=False)
+    cargo = forms.CharField(label="Cargo", max_length=150, required=False)
+
+    def __init__(self, *args, user, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.perfil = getattr(user, "perfil_asesor", None)
+        self.fields["first_name"].initial = user.first_name
+        self.fields["last_name"].initial = user.last_name
+        self.fields["email"].initial = user.email
+        if self.perfil:
+            self.fields["documento"].initial = self.perfil.documento
+            self.fields["cargo"].initial = self.perfil.cargo
+        else:
+            self.fields.pop("documento")
+            self.fields.pop("cargo")
+        for field in self.fields.values():
+            field.widget.attrs.setdefault("class", "form-control")
+
+    def clean_email(self):
+        email = self.cleaned_data["email"].strip().lower()
+        if (
+            get_user_model().objects.filter(email__iexact=email)
+            .exclude(pk=self.user.pk)
+            .exists()
+        ):
+            raise forms.ValidationError("Este correo pertenece a otra cuenta.")
+        return email
+
+    def save(self):
+        self.user.first_name = self.cleaned_data["first_name"].strip()
+        self.user.last_name = self.cleaned_data["last_name"].strip()
+        self.user.email = self.cleaned_data["email"]
+        self.user.save(update_fields=["first_name", "last_name", "email"])
+        if self.perfil:
+            self.perfil.documento = self.cleaned_data.get("documento", "").strip()
+            self.perfil.cargo = self.cleaned_data.get("cargo", "").strip()
+            self.perfil.save(update_fields=["documento", "cargo"])
+        return self.user
+
+
 class UsuarioInternoForm(forms.Form):
     """Provision an internal account without exposing technical admin controls."""
 

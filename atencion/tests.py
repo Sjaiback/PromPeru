@@ -167,6 +167,45 @@ class FlujoAtencionTests(TestCase):
         response = self.client.get(reverse("atencion:empresas"))
         self.assertEqual(response.status_code, 403)
 
+    def test_asesor_actualiza_sus_datos_personales(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("atencion:mi_perfil"),
+            {
+                "accion": "datos",
+                "first_name": "Asesor",
+                "last_name": "Actualizado",
+                "email": "asesor.actualizado@example.test",
+                "documento": "87654321",
+                "cargo": "Asesor comercial",
+            },
+        )
+        self.assertRedirects(response, reverse("atencion:mi_perfil"))
+        self.user.refresh_from_db()
+        self.perfil.refresh_from_db()
+        self.assertEqual(self.user.email, "asesor.actualizado@example.test")
+        self.assertEqual(self.perfil.documento, "87654321")
+
+    def test_asesor_cambia_su_contrasena_y_mantiene_sesion(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("atencion:mi_perfil"),
+            {
+                "accion": "password",
+                "old_password": "test-pass-123",
+                "new_password1": "Nueva-clave-segura-2026",
+                "new_password2": "Nueva-clave-segura-2026",
+            },
+        )
+        self.assertRedirects(response, reverse("atencion:mi_perfil"))
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password("Nueva-clave-segura-2026"))
+        self.assertEqual(self.client.get(reverse("atencion:mi_perfil")).status_code, 200)
+
+    def test_cliente_no_puede_acceder_a_mi_perfil(self):
+        self.client.force_login(self.cliente)
+        self.assertEqual(self.client.get(reverse("atencion:mi_perfil")).status_code, 403)
+
     def test_admin_django_solo_admite_cuenta_de_sistemas(self):
         response = self.client.get("/admin/")
         self.assertEqual(response.status_code, 403)

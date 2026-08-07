@@ -1,5 +1,7 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
 from django.db import transaction
 from django.db.models import Q
@@ -14,6 +16,7 @@ from .forms import (
     AtencionRegistroForm,
     EmpresaForm,
     UsuarioInternoForm,
+    MiPerfilForm,
 )
 from .models import Atencion, Empresa, PerfilAsesor
 from .middleware import es_cliente
@@ -378,3 +381,36 @@ def asesor_editar(request, pk):
         "atencion/asesor_form.html",
         {"form": form, "perfil": perfil},
     )
+
+
+@login_required
+def mi_perfil(request):
+    if es_cliente(request.user):
+        return render(request, "errors/403.html", status=403)
+
+    datos_form = MiPerfilForm(
+        request.POST or None if request.POST.get("accion") == "datos" else None,
+        user=request.user,
+    )
+    password_form = PasswordChangeForm(
+        request.user,
+        request.POST or None if request.POST.get("accion") == "password" else None,
+    )
+    for field in password_form.fields.values():
+        field.widget.attrs.setdefault("class", "form-control")
+
+    if request.method == "POST" and request.POST.get("accion") == "datos" and datos_form.is_valid():
+        antes = serializar(request.user)
+        datos_form.save()
+        auditar(request, "editar", request.user, antes=antes, descripcion="Datos personales actualizados por el usuario")
+        messages.success(request, "Tus datos personales fueron actualizados.")
+        return redirect("atencion:mi_perfil")
+
+    if request.method == "POST" and request.POST.get("accion") == "password" and password_form.is_valid():
+        password_form.save()
+        update_session_auth_hash(request, request.user)
+        auditar(request, "editar", request.user, descripcion="Contraseña actualizada por el propio usuario")
+        messages.success(request, "Tu contraseña fue actualizada correctamente.")
+        return redirect("atencion:mi_perfil")
+
+    return render(request, "atencion/mi_perfil.html", {"datos_form": datos_form, "password_form": password_form})

@@ -24,7 +24,7 @@
 
     <link
         rel="stylesheet"
-        href="{% static 'css/app.css' %}?v=20260807-4"
+        href="{% static 'css/app.css' %}?v=20260807-5"
     />
 
     <link
@@ -86,6 +86,10 @@
 
                 <a href="{% url 'seguimiento:bandeja' %}">
                     Seguimiento
+                </a>
+
+                <a href="{% url 'atencion:mi_perfil' %}">
+                    Mi perfil
                 </a>
 
                 {% if user.is_superuser or user.perfil_asesor.acceso_bi %}

@@ -29,6 +29,7 @@ urlpatterns = [
     ),
     path("panel/auditoria/", views.auditoria, name="auditoria"),
     path("panel/configuracion/", views.configuracion, name="configuracion"),
+    path("panel/mi-perfil/", views.mi_perfil, name="mi_perfil"),
     path("panel/configuracion/asesores/", views.asesores, name="asesores"),
     path(
         "panel/configuracion/asesores/nuevo/",
