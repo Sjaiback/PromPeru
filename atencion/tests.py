@@ -60,10 +60,16 @@ class FlujoAtencionTests(TestCase):
     def test_publico_crea_empresa_atencion_y_auditoria(self):
         self.client.force_login(self.cliente)
         response = self.client.post(reverse("atencion:publico"), self.payload_nuevo())
-        self.assertRedirects(response, reverse("atencion:gracias"))
+        self.assertRedirects(
+            response, reverse("atencion:gracias"), fetch_redirect_response=False
+        )
         self.assertEqual(Empresa.objects.count(), 1)
         self.assertEqual(Atencion.objects.get().origen, "publico")
         self.assertEqual(RegistroAuditoria.objects.get().actor, None)
+        response = self.client.get(reverse("atencion:gracias"))
+        self.assertContains(response, "En un momento atenderemos tu solicitud")
+        self.assertContains(response, self.responsable.nombre)
+        self.assertContains(response, "data-countdown")
 
     def test_cliente_existente_solo_responde_canal_y_responsable(self):
         self.client.force_login(self.cliente)

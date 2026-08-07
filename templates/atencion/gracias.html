@@ -1,14 +1,38 @@
-{% extends 'base.html' %}{% block title %}Atención registrada · PROMPERÚ{% endblock %}{% block content %}
+{% extends 'base.html' %}
+{% block title %}Atención registrada · PROMPERÚ{% endblock %}
+{% block content %}
 <section class="success-shell">
-  <span class="success-mark">✓</span
-  ><span class="eyebrow">Registro completado</span>
+  <span class="success-mark">✓</span>
+  <span class="eyebrow">Registro completado</span>
   <h1>Gracias por comunicarte con PROMPERÚ.</h1>
   <p>
-    Tu atención fue asignada al responsable seleccionado. Ya puedes cerrar esta
-    ventana.
+    En un momento atenderemos tu solicitud.
+    {% if responsable %}
+      Serás atendido por <strong>{{ responsable }}</strong>.
+    {% else %}
+      Tu solicitud será derivada al equipo correspondiente.
+    {% endif %}
   </p>
-  <a class="btn btn-primary" href="{% url 'atencion:publico' %}"
-    >Registrar otra atención</a
-  >
+  <p class="success-redirect" aria-live="polite">
+    Preparando el formulario para el siguiente cliente en
+    <strong data-countdown>10</strong> segundos…
+  </p>
+  <a class="btn btn-primary" href="{% url 'atencion:publico' %}">Volver ahora al formulario</a>
 </section>
+<script>
+  (() => {
+    const seconds = document.querySelector('[data-countdown]');
+    if (!seconds) return;
+    let remaining = 10;
+    const formUrl = "{% url 'atencion:publico' %}";
+    const timer = window.setInterval(() => {
+      remaining -= 1;
+      seconds.textContent = remaining;
+      if (remaining <= 0) {
+        window.clearInterval(timer);
+        window.location.assign(formUrl);
+      }
+    }, 1000);
+  })();
+</script>
 {% endblock %}

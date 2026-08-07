@@ -77,6 +77,9 @@ def form_registro(request, publico=False):
         if publico:
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
                 return JsonResponse({"success": True})
+            # Solo guardamos temporalmente el responsable para la confirmación;
+            # no exponemos datos del cliente en la siguiente pantalla.
+            request.session["responsable_ultima_atencion"] = atencion.responsable.nombre
             return redirect("atencion:gracias")
         messages.success(request, f"Atención #{atencion.pk} registrada correctamente.")
         return redirect("atencion:detalle", pk=atencion.pk)
@@ -103,7 +106,8 @@ def registro_publico(request):
 
 @login_required
 def gracias(request):
-    return render(request, "atencion/gracias.html")
+    responsable = request.session.pop("responsable_ultima_atencion", None)
+    return render(request, "atencion/gracias.html", {"responsable": responsable})
 
 
 @login_required
