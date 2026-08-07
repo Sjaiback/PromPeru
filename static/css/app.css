@@ -718,10 +718,6 @@ tr:last-child td {
 .chart-periods button { border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:999px; padding:7px 12px; cursor:pointer; font-weight:700; font-size:12px; transition:.2s; }
 .chart-periods button:hover,.chart-periods button.is-active { color:#fff; background:var(--dark); border-color:var(--dark); }
 .chart-periods small { font-size:10px; margin-left:3px; opacity:.75; }
-.chart-key { display:flex; flex-wrap:wrap; gap:7px 12px; margin-top:12px; }
-.chart-key span { display:inline-flex; align-items:center; gap:5px; color:var(--muted); font-size:11px; }
-.chart-key i { width:8px; height:8px; flex:0 0 auto; border-radius:50%; }
-.chart-key b { color:var(--ink); font-size:12px; }
 .bars {
   display: grid;
   gap: 13px;

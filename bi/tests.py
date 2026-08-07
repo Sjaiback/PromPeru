@@ -77,3 +77,8 @@ class ArchivoMensualTests(TestCase):
         self.assertContains(response, 'data-chart-period="dia"')
         self.assertContains(response, 'data-chart-period="semana"')
         self.assertContains(response, 'data-chart-period="mes"')
+        self.assertIn("tendencias", response.context["chart_data"])
+        self.assertEqual(
+            set(response.context["chart_data"]["tendencias"]),
+            {"dia", "semana", "mes"},
+        )
