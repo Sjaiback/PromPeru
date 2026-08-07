@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from atencion.models import Empresa
+from atencion.models import Atencion
 
 
 class EmpresaRating(models.Model):
@@ -26,6 +27,39 @@ class EmpresaRating(models.Model):
 
     def __str__(self):
         return f"{self.empresa} · {self.total}"
+
+
+class PerfilEvaluacionEmpresa(models.Model):
+    """Información de evaluación que se reutiliza entre visitas de una empresa."""
+
+    empresa = models.OneToOneField(
+        Empresa, on_delete=models.CASCADE, related_name="perfil_evaluacion"
+    )
+    datos = models.JSONField(default=dict, blank=True)
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+
+class EvaluacionVisita(models.Model):
+    """Fotografía de la evaluación realizada para una atención concreta."""
+
+    atencion = models.ForeignKey(
+        Atencion, on_delete=models.CASCADE, related_name="evaluaciones"
+    )
+    empresa = models.ForeignKey(
+        Empresa, on_delete=models.PROTECT, related_name="evaluaciones_visita"
+    )
+    evaluado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL
+    )
+    respuestas = models.JSONField(default=dict, blank=True)
+    puntajes_seccion = models.JSONField(default=dict, blank=True)
+    puntaje_total = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    creado = models.DateTimeField(auto_now_add=True)
+    actualizado = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ["-creado"]
 
 
 class CategoriaRating(models.Model):
