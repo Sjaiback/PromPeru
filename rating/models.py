@@ -60,6 +60,11 @@ class EvaluacionVisita(models.Model):
 
     class Meta:
         ordering = ["-creado"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["atencion"], name="evaluacion_unica_por_atencion"
+            )
+        ]
 
 
 class CategoriaRating(models.Model):

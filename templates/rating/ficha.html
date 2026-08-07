@@ -1,0 +1,70 @@
+{% extends 'base.html' %}{% load static %}
+{% block title %}Evaluación de visita · {{ empresa.nombre }}{% endblock %}
+{% block content %}
+<header class="page-head rating-head">
+  <div>
+    <span class="eyebrow">Evaluación de la atención #{{ atencion.pk }}</span>
+    <h1>{{ empresa.nombre }}</h1>
+    <p>{{ empresa.numero_documento }} · Los datos guardados se reutilizarán en próximas visitas.</p>
+  </div>
+  <div class="rating-actions">
+    {% if evaluacion.pk and evaluacion.respuestas %}<a class="btn btn-ghost" href="{% url 'rating:exportar_evaluacion' atencion.pk %}">Descargar Excel</a>{% endif %}
+    <div class="rating-total"><span>Puntaje total</span><strong>{{ evaluacion.puntaje_total }}</strong></div>
+  </div>
+</header>
+<form method="post" class="visit-evaluation" data-ficha-form novalidate>
+  {% csrf_token %}
+  <nav class="evaluation-index" aria-label="Secciones de evaluación">
+    {% for seccion in secciones %}<a href="#sec-{{ seccion.code }}">{{ forloop.counter|stringformat:'02d' }} {{ seccion.title }}</a>{% endfor %}
+  </nav>
+  {% for seccion in secciones %}
+  <section class="visit-section" id="sec-{{ seccion.code }}">
+    <header>
+      <div><span>{{ forloop.counter|stringformat:'02d' }}</span><h2>{{ seccion.title }}</h2></div>
+      {% if seccion.max %}<div class="section-score"><strong>{{ seccion.score }}</strong><small>/ {{ seccion.max }} puntos</small></div>{% endif %}
+    </header>
+    <div class="visit-fields">
+      {% for q in seccion.questions %}
+      <article class="visit-field {% if q.type == 'repeat' or q.type == 'textarea' %}wide{% endif %}" data-question="{{ q.code }}" {% if q.show_if %}data-show-if="{{ q.show_if }}"{% endif %}>
+        <label class="question-label">{{ q.label }}</label>
+        {% if q.type == 'yesno' %}
+          <div class="choice-buttons">
+            <label><input type="radio" name="{{ q.code }}" value="si" {% if q.value == 'si' %}checked{% endif %}><span>Sí</span></label>
+            <label><input type="radio" name="{{ q.code }}" value="no" {% if q.value == 'no' %}checked{% endif %}><span>No</span></label>
+          </div>
+        {% elif q.type == 'choice' %}
+          <div class="choice-buttons choice-buttons-wrap">
+            {% for value,label in q.options %}<label><input type="radio" name="{{ q.code }}" value="{{ value }}" {% if q.value == value %}checked{% endif %}><span>{{ label }}</span></label>{% endfor %}
+          </div>
+        {% elif q.type == 'textarea' %}
+          <textarea name="{{ q.code }}" rows="3" class="form-control">{{ q.value }}</textarea>
+        {% elif q.type == 'repeat' %}
+          <div class="repeat-list" data-repeat-list data-repeat-code="{{ q.code }}" data-repeat-min="{{ q.min_items|default:1 }}">
+            {% for row in q.rows %}<div class="repeat-row">
+              {% for field in row.fields %}<label><span>{{ field.label }}</span>
+                {% if field.type == 'select' %}<select name="{{ q.code }}__{{ field.code }}[]" class="form-control"><option value="">Seleccionar</option>{% for value,label in field.options %}<option value="{{ value }}" {% if field.value == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
+                {% else %}<input type="{{ field.type|default:'text' }}" name="{{ q.code }}__{{ field.code }}[]" value="{{ field.value }}" class="form-control">{% endif %}
+              </label>{% endfor %}
+              <button class="repeat-remove" type="button" data-repeat-remove aria-label="Eliminar">×</button>
+            </div>{% endfor %}
+          </div>
+          <button type="button" class="add-row" data-repeat-add="{{ q.code }}">+ {{ q.add_label }}</button>
+        {% else %}
+          <div class="input-with-blank">
+            <input type="{% if q.type == 'url' %}url{% elif q.type == 'email' %}email{% elif q.type == 'number' or q.type == 'number_blank' %}number{% else %}text{% endif %}" name="{{ q.code }}" value="{{ q.value }}" class="form-control" {% if q.step %}step="{{ q.step }}"{% endif %} {% if q.min %}min="{{ q.min }}"{% endif %}>
+            {% if q.type == 'number_blank' %}<label class="blank-toggle"><input type="checkbox" name="{{ q.code }}__blank" value="1"><span>Dejar en blanco</span></label>{% endif %}
+          </div>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endfor %}
+  <div class="sticky-save ficha-save">
+    <a class="btn btn-ghost" href="{% url 'atencion:detalle' atencion.pk %}">Volver</a>
+    <span>Los cambios actualizarán los datos permanentes de esta empresa.</span>
+    <button class="btn btn-primary" type="submit">Guardar y calcular evaluación</button>
+  </div>
+</form>
+{% endblock %}
+{% block extra_scripts %}<script defer src="{% static 'js/ficha.js' %}?v=20260807-1"></script>{% endblock %}

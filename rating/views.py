@@ -5,10 +5,12 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 import re
 from django.utils.text import slugify
-from atencion.models import Empresa, Region, Sector
+from atencion.models import Atencion, Empresa, Region, Sector
+from openpyxl import Workbook
 from .forms import ImportarExcelForm
 from .forms import EvaluacionDinamicaForm
 from .models import (
@@ -18,8 +20,11 @@ from .models import (
     ImportacionRating,
     MapeoColumna,
     ValorCriterio,
+    EvaluacionVisita,
+    PerfilEvaluacionEmpresa,
 )
 from atencion.auditoria import registrar as auditar
+from .ficha import SECCIONES, preparar_ficha, puntuar
 
 
 def norm(value):
@@ -223,68 +228,105 @@ def _valor_inicial(valor):
 @login_required
 def evaluar_empresa(request, empresa_id):
     empresa = get_object_or_404(Empresa, pk=empresa_id)
-    rating, _ = EmpresaRating.objects.get_or_create(empresa=empresa)
-    criterios = CriterioRating.objects.filter(activo=True).select_related("categoria")
-    valores_obj = {
-        v.criterio_id: v for v in rating.criterios.select_related("criterio")
-    }
-    iniciales = {k: _valor_inicial(v) for k, v in valores_obj.items()}
-    form = EvaluacionDinamicaForm(
-        request.POST or None, criterios=criterios, valores=iniciales
-    )
-    if request.method == "POST" and form.is_valid():
-        for criterio in criterios:
-            value = form.cleaned_data.get(f"criterio_{criterio.pk}")
-            defaults = {"valor_texto": "", "valor_numero": None, "valor_booleano": None}
-            if criterio.tipo_dato == "booleano":
-                defaults["valor_booleano"] = (
-                    True if value == "si" else False if value == "no" else None
-                )
-            elif criterio.tipo_dato == "numero":
-                defaults["valor_numero"] = value
-            else:
-                defaults["valor_texto"] = str(value or "")
-            ValorCriterio.objects.update_or_create(
-                rating=rating, criterio=criterio, defaults=defaults
-            )
-        rating.recalcular()
-        auditar(
-            request,
-            "editar",
-            rating,
-            descripcion=f"Evaluación de {empresa.nombre} actualizada",
-        )
-        messages.success(
-            request,
-            "Evaluación guardada. Todas las respuestas quedaron vinculadas al asesor y la empresa.",
-        )
-        return redirect("rating:evaluar", empresa_id=empresa.pk)
-    categorias = []
-    for categoria in CategoriaRating.objects.filter(activa=True):
-        names = [
-            f"criterio_{c.pk}" for c in criterios if c.categoria_id == categoria.pk
-        ]
-        fields = [form[name] for name in names if name in form.fields]
-        if fields:
-            grupos = []
-            for field in fields:
-                grupo = (field.help_text or "").strip()
-                # El Excel repite la cabecera del grupo en cada columna. La
-                # mostramos una sola vez y dejamos cada pregunta limpia.
-                prefijo = f"{grupo} — "
-                if grupo and field.label.casefold().startswith(prefijo.casefold()):
-                    field.field.label = field.label[len(prefijo) :]
-                if not grupos or grupos[-1]["nombre"] != grupo:
-                    grupos.append({"nombre": grupo, "fields": []})
-                grupos[-1]["fields"].append(field)
+    atencion = empresa.atenciones.filter(anulada=False).order_by("-fecha", "-creado").first()
+    if not atencion:
+        messages.error(request, "La empresa aún no tiene una atención asociada.")
+        return redirect("atencion:empresas")
+    return redirect("rating:evaluar_visita", atencion_id=atencion.pk)
 
-            categoria_base = re.sub(r"\s*:\s*\d+\s*$", "", categoria.nombre)
-            for grupo in grupos:
-                if grupo["nombre"].casefold() == categoria_base.casefold():
-                    grupo["nombre"] = ""
-            categorias.append((categoria, grupos))
-    return render(
-        request,
-        "rating/evaluar.html",
-        {"empresa": empresa, "rating": rating, "form": form, "categorias": categorias},
-    )
+
+def _datos_iniciales(empresa):
+    return {"contactos": [{"nombres": empresa.nombres_apellidos, "apellidos": "", "cargo": empresa.cargo, "telefono": empresa.telefono, "correo1": empresa.email, "correo2": ""}]}
+
+
+def _leer_respuestas(post):
+    respuestas = {}
+    for seccion in SECCIONES:
+        for question in seccion["questions"]:
+            code = question["code"]
+            if question["type"] == "repeat":
+                columns = {sub["code"]: post.getlist(f"{code}__{sub['code']}[]") for sub in question["subfields"]}
+                total = max([len(values) for values in columns.values()] or [0])
+                respuestas[code] = [
+                    {key: (values[index].strip() if index < len(values) else "") for key, values in columns.items()}
+                    for index in range(total)
+                    if any(index < len(values) and values[index].strip() for values in columns.values())
+                ]
+            elif question["type"] == "number_blank" and post.get(f"{code}__blank"):
+                respuestas[code] = ""
+            else:
+                respuestas[code] = post.get(code, "").strip()
+    for seccion in SECCIONES:
+        for question in seccion["questions"]:
+            if question.get("show_if"):
+                parent, expected = question["show_if"].split(":", 1)
+                if respuestas.get(parent) != expected:
+                    respuestas[question["code"]] = [] if question["type"] == "repeat" else ""
+    return respuestas
+
+
+@login_required
+def evaluar_visita(request, atencion_id):
+    atencion = get_object_or_404(Atencion.objects.select_related("empresa", "responsable"), pk=atencion_id)
+    empresa = atencion.empresa
+    perfil, _ = PerfilEvaluacionEmpresa.objects.get_or_create(empresa=empresa, defaults={"datos": _datos_iniciales(empresa)})
+    evaluacion = EvaluacionVisita.objects.filter(atencion=atencion).first()
+    if not evaluacion:
+        evaluacion = EvaluacionVisita(atencion=atencion, empresa=empresa, evaluado_por=request.user)
+    valores = {**perfil.datos, **evaluacion.respuestas}
+    redes = valores.get("redes_detalle", [])
+    plataformas = {row.get("red") for row in redes if isinstance(row, dict)}
+    if valores.get("web_url") and not valores.get("web"):
+        valores["web"] = "si"
+    for plataforma in ("facebook", "instagram", "linkedin"):
+        if plataforma in plataformas and not valores.get(plataforma):
+            valores[plataforma] = "si"
+    if request.method == "POST":
+        respuestas = _leer_respuestas(request.POST)
+        puntos, total = puntuar(respuestas)
+        evaluacion.empresa = empresa
+        evaluacion.evaluado_por = request.user
+        evaluacion.respuestas = respuestas
+        evaluacion.puntajes_seccion = {key: str(value) for key, value in puntos.items()}
+        evaluacion.puntaje_total = total
+        evaluacion.save()
+        perfil.datos = respuestas
+        perfil.save(update_fields=["datos", "actualizado"])
+        auditar(request, "editar", evaluacion, descripcion=f"Ficha de evaluación de atención #{atencion.pk} actualizada")
+        messages.success(request, "Evaluación guardada y datos permanentes actualizados.")
+        return redirect("rating:evaluar_visita", atencion_id=atencion.pk)
+    secciones = preparar_ficha(valores)
+    for seccion in secciones:
+        seccion["score"] = (evaluacion.puntajes_seccion or {}).get(seccion["code"], "0")
+    return render(request, "rating/ficha.html", {"empresa": empresa, "atencion": atencion, "evaluacion": evaluacion, "secciones": secciones})
+
+
+@login_required
+def exportar_evaluacion(request, atencion_id):
+    evaluacion = get_object_or_404(EvaluacionVisita.objects.select_related("empresa", "atencion", "evaluado_por"), atencion_id=atencion_id)
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Evaluación"
+    ws.append(["PROMPERÚ – Ficha de evaluación por visita"])
+    ws.append(["Empresa / persona", evaluacion.empresa.nombre])
+    ws.append(["Documento", evaluacion.empresa.numero_documento])
+    ws.append(["Atención", evaluacion.atencion_id])
+    ws.append(["Fecha", evaluacion.atencion.fecha])
+    ws.append(["Asesor", evaluacion.evaluado_por.get_full_name() if evaluacion.evaluado_por else ""])
+    ws.append([])
+    ws.append(["Sección", "Pregunta", "Respuesta", "Puntaje de sección"])
+    for seccion in SECCIONES:
+        for index, question in enumerate(seccion["questions"]):
+            value = evaluacion.respuestas.get(question["code"], "")
+            if isinstance(value, list):
+                value = "; ".join(", ".join(str(v) for v in row.values() if v) for row in value)
+            ws.append([seccion["title"], question["label"], value, evaluacion.puntajes_seccion.get(seccion["code"], "") if index == 0 else ""])
+    ws.append([])
+    ws.append(["PUNTAJE TOTAL", "", "", float(evaluacion.puntaje_total)])
+    ws.freeze_panes = "A9"
+    for col, width in {"A": 32, "B": 62, "C": 48, "D": 20}.items():
+        ws.column_dimensions[col].width = width
+    response = HttpResponse(content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    response["Content-Disposition"] = f'attachment; filename="evaluacion_atencion_{atencion_id}.xlsx"'
+    wb.save(response)
+    return response
