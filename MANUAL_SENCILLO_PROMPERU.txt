@@ -1,0 +1,268 @@
+MANUAL SENCILLO DEL SISTEMA PROMPERÚ
+====================================
+
+1. ¿PARA QUÉ SIRVE ESTA WEB?
+----------------------------
+
+Esta web permite registrar y organizar las atenciones realizadas a empresas,
+personas naturales y otros usuarios que solicitan orientación de PROMPERÚ.
+
+El sistema conserva los datos principales de cada empresa o persona para evitar
+que tengan que volver a escribirlos en cada visita. También permite realizar
+seguimiento, evaluar su capacidad exportadora, revisar indicadores y descargar
+información en Excel.
+
+
+2. TIPOS DE ACCESO
+------------------
+
+ACCESO DE CLIENTE
+
+La cuenta de cliente solamente puede utilizar el formulario de atención.
+No puede entrar al panel interno, consultar empresas, ver evaluaciones ni cambiar
+configuraciones.
+
+Cuando el cliente registra su atención, aparece una confirmación con el nombre
+del responsable seleccionado. Después de 10 segundos, el formulario queda limpio
+para recibir al siguiente cliente.
+
+
+ACCESO DE ASESOR
+
+El asesor puede registrar atenciones, consultar empresas, realizar seguimiento,
+completar evaluaciones y actualizar sus propios datos o contraseña.
+
+
+ACCESO DE COORDINADOR
+
+El coordinador tiene las funciones del asesor y, además, puede administrar las
+cuentas internas autorizadas y asignar roles.
+
+
+ACCESO DE SISTEMAS / ADMINISTRADOR
+
+La cuenta de sistemas tiene acceso completo. Puede administrar usuarios,
+configuración, auditoría, reportes, archivos y el panel técnico de Django.
+La dirección /admin/ está reservada únicamente para esta cuenta.
+
+
+3. MENÚ PRINCIPAL
+-----------------
+
+RESUMEN
+
+Es la pantalla inicial del personal interno. Muestra la cantidad de atenciones y
+los registros más recientes.
+
+
+NUEVA ATENCIÓN
+
+Permite registrar una atención realizada por WhatsApp, correo, teléfono,
+reunión virtual, visita o atención presencial.
+
+Si el DNI o RUC ya existe, el sistema recupera los datos guardados. Si no existe,
+el asesor puede registrar a la empresa o persona en ese momento.
+
+El responsable de la atención se relaciona con el asesor correspondiente.
+
+
+EMPRESAS Y CONTACTOS
+
+Muestra las empresas y personas registradas. Desde esta sección se pueden buscar,
+consultar y actualizar sus datos.
+
+Los datos principales permanecen guardados aunque se limpien las atenciones
+históricas mediante el proceso de archivo mensual.
+
+
+SEGUIMIENTO
+
+Permite revisar el estado de cada atención y registrar las acciones realizadas.
+Por ejemplo: pendiente, en proceso, atendida o cerrada.
+
+Los cambios quedan relacionados con el usuario que los realizó.
+
+
+DASHBOARDS
+
+Muestra la información de las atenciones mediante gráficos y cifras resumidas.
+
+Incluye datos como:
+
+- Atenciones por día, semana o mes.
+- Canales de atención.
+- Carga por responsable.
+- Atenciones por región.
+- Sectores económicos.
+- Estados de seguimiento.
+
+
+ARCHIVO MENSUAL
+
+Esta función sirve para descargar la información histórica de las atenciones en
+Excel antes de eliminarla de la base de datos operativa.
+
+Puede generar información global y segmentada por asesor. Las cuentas, empresas,
+responsables y catálogos permanentes no deben eliminarse con este proceso.
+
+
+AUDITORÍA
+
+Registra las acciones importantes realizadas dentro del sistema, por ejemplo:
+
+- Creación de registros.
+- Edición de información.
+- Anulación o eliminación lógica.
+- Cambios realizados por asesores.
+- Actualización de cuentas y perfiles.
+
+Esto permite saber quién realizó un cambio y cuándo lo hizo.
+
+
+IMPORTAR RATING HISTÓRICO
+
+Sirve únicamente para trasladar información antigua desde un archivo Excel como
+SISTEMATIZAR.xlsx.
+
+El sistema primero lee el archivo, muestra una vista previa y permite revisar la
+relación entre las columnas antes de guardar información.
+
+No se utiliza para registrar evaluaciones nuevas. Las evaluaciones nuevas se
+realizan desde la ficha asociada a cada visita.
+
+
+CONFIGURACIÓN
+
+Permite revisar los catálogos del sistema y, para usuarios autorizados,
+administrar cuentas de asesores y coordinadores.
+
+
+MI PERFIL
+
+Cada usuario interno puede:
+
+- Actualizar sus nombres y apellidos.
+- Actualizar su correo electrónico.
+- Actualizar su documento y cargo.
+- Cambiar su contraseña confirmando primero la contraseña actual.
+
+La cuenta compartida de cliente no tiene acceso a esta sección.
+
+
+4. FORMULARIO DEL CLIENTE
+-------------------------
+
+El cliente inicia sesión con la cuenta autorizada y escribe su DNI, RUC o CE.
+
+Si ya está registrado, el sistema recupera sus datos y solo solicita la
+información necesaria para la nueva atención.
+
+Si es un registro nuevo, se solicitan los datos de contacto, región, sector,
+producto o servicio y demás información requerida.
+
+Al finalizar, aparece un mensaje emergente confirmando el registro y mostrando
+al responsable seleccionado.
+
+
+5. EVALUACIÓN POR VISITA
+------------------------
+
+Cada atención puede tener su propia evaluación. Para abrirla:
+
+1. Ingresar al detalle de la atención.
+2. Presionar “Evaluar visita”.
+3. Completar la ficha.
+4. Presionar “Guardar y calcular evaluación”.
+
+La evaluación utiliza botones Sí/No, opciones múltiples, valores numéricos y
+campos que aparecen solamente cuando son necesarios.
+
+También permite añadir varias redes sociales, actividades, países, contactos o
+eslabones de la cadena de valor.
+
+
+6. DATOS PERMANENTES Y DATOS POR VISITA
+---------------------------------------
+
+DATOS PERMANENTES
+
+Son los datos asociados a la empresa o persona. Se guardan para utilizarlos en
+visitas futuras y pueden editarse cuando cambien.
+
+
+DATOS POR VISITA
+
+Cada evaluación conserva una copia de las respuestas y puntajes correspondientes
+a esa atención. Una evaluación nueva no elimina ni reemplaza las anteriores.
+
+
+7. PUNTAJES DE LA EVALUACIÓN
+----------------------------
+
+El sistema calcula automáticamente los puntajes según las respuestas.
+
+- Criterios obligatorios: máximo 8 puntos.
+- Capacidad exportadora: máximo indicado 9 puntos.
+- Digitalización: máximo 4 puntos.
+- Salud financiera: máximo 2.5 puntos.
+- Gobierno corporativo y competitividad: máximo 3.75 puntos.
+
+Las preguntas informativas se guardan, pero no suman puntos cuando así se ha
+definido.
+
+
+8. EXPORTAR LA EVALUACIÓN
+-------------------------
+
+Después de guardar una evaluación aparece el botón “Descargar Excel”.
+
+El archivo incluye:
+
+- Empresa o persona evaluada.
+- Documento.
+- Atención y fecha.
+- Asesor que realizó la evaluación.
+- Preguntas y respuestas.
+- Puntajes por sección.
+- Puntaje total.
+
+
+9. RECUPERACIÓN Y CAMBIO DE CONTRASEÑA
+--------------------------------------
+
+En el inicio de sesión existe la opción “Olvidé mi contraseña”. El envío de
+correos funcionará cuando el servicio de correo SendPulse quede configurado.
+
+Si el usuario recuerda su contraseña, puede cambiarla desde “Mi perfil”.
+
+
+10. SEGURIDAD
+-------------
+
+- El formulario requiere una cuenta de cliente.
+- El cliente no puede ingresar al panel interno.
+- La administración técnica está reservada para sistemas.
+- Los cambios importantes se registran en auditoría.
+- Cada asesor utiliza su propia cuenta.
+- Las contraseñas se almacenan protegidas por Django y no se muestran en texto.
+
+
+11. FLUJO RECOMENDADO DE TRABAJO
+--------------------------------
+
+1. El cliente o asesor registra una atención.
+2. El sistema busca o registra a la empresa/persona.
+3. La atención queda asignada a un responsable.
+4. El asesor realiza el seguimiento.
+5. Cuando corresponda, abre y completa la evaluación de la visita.
+6. El sistema calcula el puntaje y conserva el historial.
+7. Los responsables autorizados revisan los dashboards.
+8. Periódicamente, el administrador descarga y archiva la información histórica.
+
+
+FIN DEL MANUAL
+--------------
+
+Este documento describe el funcionamiento general del sistema. Algunas funciones,
+como el correo de recuperación, requieren terminar la configuración del servicio
+externo antes de utilizarse en producción.
