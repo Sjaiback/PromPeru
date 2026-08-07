@@ -90,6 +90,27 @@ class FlujoAtencionTests(TestCase):
         self.assertEqual(Atencion.objects.get().responsable, self.responsable)
         self.assertEqual(Atencion.objects.get().registrado_por, self.user)
 
+    def test_detalle_de_atencion_muestra_fecha_sin_error(self):
+        atencion = Atencion.objects.create(
+            tipo_atencion="Presencial",
+            responsable=self.responsable,
+            empresa=Empresa.objects.create(
+                tipo_documento="DNI",
+                numero_documento="12345678",
+                nombre="Empresa de prueba",
+                tipo_usuario="Exportador",
+                telefono="999888777",
+                email="empresa@example.test",
+                sector=self.sector,
+                region=self.region,
+                oferta_producto_servicio="Prueba",
+            ),
+        )
+        self.client.force_login(self.user)
+        response = self.client.get(reverse("atencion:detalle", args=[atencion.pk]))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "de")
+
     def test_api_no_expone_contacto_sin_actualizar(self):
         self.client.force_login(self.cliente)
         self.client.post(reverse("atencion:publico"), self.payload_nuevo())

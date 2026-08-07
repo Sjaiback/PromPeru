@@ -4,7 +4,7 @@
     <span class="eyebrow">Atención #{{ atencion.pk }}</span>
     <h1>{{ atencion.empresa.nombre }}</h1>
     <p>
-      {{ atencion.empresa.numero_documento }} · {{ atencion.fecha|date:'d de F de Y' }}
+      {{ atencion.empresa.numero_documento }} · {{ atencion.fecha|date:'d \d\e F \d\e Y' }}
     </p>
   </div>
   <div class="button-row">
