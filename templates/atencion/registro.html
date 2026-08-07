@@ -80,4 +80,17 @@
     </div>
   </form>
 </section>
+{% if publico %}
+  <div class="confirmation-modal" data-confirmation-modal hidden role="dialog" aria-modal="true" aria-labelledby="confirmation-title">
+    <div class="confirmation-modal__backdrop"></div>
+    <section class="confirmation-modal__card">
+      <span class="confirmation-modal__icon" aria-hidden="true">✓</span>
+      <span class="eyebrow">Atención registrada</span>
+      <h2 id="confirmation-title">Recibimos tu solicitud.</h2>
+      <p>En un momento te atenderemos con <strong data-confirmation-responsable>el equipo seleccionado</strong>.</p>
+      <p class="confirmation-modal__countdown">Este formulario estará listo para el siguiente cliente en <strong data-confirmation-countdown>10</strong>s.</p>
+      <button type="button" class="btn btn-primary" data-confirmation-close>Entendido</button>
+    </section>
+  </div>
+{% endif %}
 {% endblock %}

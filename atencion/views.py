@@ -76,7 +76,9 @@ def form_registro(request, publico=False):
             )
         if publico:
             if request.headers.get("x-requested-with") == "XMLHttpRequest":
-                return JsonResponse({"success": True})
+                return JsonResponse(
+                    {"success": True, "responsable": atencion.responsable.nombre}
+                )
             # Solo guardamos temporalmente el responsable para la confirmación;
             # no exponemos datos del cliente en la siguiente pantalla.
             request.session["responsable_ultima_atencion"] = atencion.responsable.nombre

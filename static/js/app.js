@@ -122,13 +122,61 @@
       if (actualizar.checked) perform(true);
       else show(company, false);
     });
+    function clearPublicForm() {
+      form.reset();
+      show(required, false);
+      show(company, false);
+      show(submit, false);
+      show(toggle, false);
+      hint.textContent = "Usaremos el documento únicamente para encontrar tu registro.";
+      hint.classList.remove("found");
+    }
+    function showConfirmation(responsable) {
+      var modal = document.querySelector("[data-confirmation-modal]");
+      if (!modal) return;
+      var name = modal.querySelector("[data-confirmation-responsable]");
+      var countdown = modal.querySelector("[data-confirmation-countdown]");
+      var close = modal.querySelector("[data-confirmation-close]");
+      var remaining = 10;
+      var finish = function () {
+        window.clearInterval(timer);
+        modal.hidden = true;
+        clearPublicForm();
+      };
+      if (name) name.textContent = responsable || "el equipo correspondiente";
+      if (countdown) countdown.textContent = remaining;
+      modal.hidden = false;
+      var timer = window.setInterval(function () {
+        remaining -= 1;
+        if (countdown) countdown.textContent = remaining;
+        if (remaining <= 0) finish();
+      }, 1000);
+      if (close) close.onclick = finish;
+    }
     form.addEventListener("submit", function (e) {
       if (form.dataset.publico !== "1") return;
-      // El formulario público debe navegar a la pantalla de confirmación.
-      // Antes se enviaba por AJAX y se limpiaba silenciosamente, lo que impedía
-      // que el cliente viera el responsable asignado y la cuenta regresiva.
+      e.preventDefault();
       var submitButton = form.querySelector('[type="submit"]');
       if (submitButton) submitButton.disabled = true;
+      fetch(form.action || window.location.href, {
+        method: "POST",
+        body: new FormData(form),
+        credentials: "same-origin",
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+      })
+        .then(function (response) {
+          return response.json().then(function (data) {
+            if (!response.ok || !data.success) throw new Error("invalid-form");
+            showConfirmation(data.responsable);
+          });
+        })
+        .catch(function () {
+          hint.textContent = "No fue posible registrar la atención. Revisa los datos e inténtalo nuevamente.";
+          hint.classList.remove("found");
+        })
+        .finally(function () {
+          if (submitButton) submitButton.disabled = false;
+        });
     });
     if (form.querySelector(".field-error,.errorlist")) {
       show(required, true);

@@ -86,6 +86,17 @@ class FlujoAtencionTests(TestCase):
         self.assertEqual(Empresa.objects.count(), 1)
         self.assertEqual(Atencion.objects.count(), 2)
 
+    def test_formulario_publico_ajax_devuelve_responsable_para_confirmacion(self):
+        self.client.force_login(self.cliente)
+        response = self.client.post(
+            reverse("atencion:publico"),
+            self.payload_nuevo(),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["success"], True)
+        self.assertEqual(response.json()["responsable"], self.responsable.nombre)
+
     def test_registro_asesor_fuerza_su_responsable(self):
         otro = Responsable.objects.create(nombre="Otro asesor")
         self.client.login(username="asesor", password="test-pass-123")
