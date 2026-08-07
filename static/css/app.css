@@ -718,6 +718,10 @@ tr:last-child td {
 .chart-periods button { border:1px solid var(--line); background:#fff; color:var(--muted); border-radius:999px; padding:7px 12px; cursor:pointer; font-weight:700; font-size:12px; transition:.2s; }
 .chart-periods button:hover,.chart-periods button.is-active { color:#fff; background:var(--dark); border-color:var(--dark); }
 .chart-periods small { font-size:10px; margin-left:3px; opacity:.75; }
+.status-legend { display:flex; flex-wrap:wrap; justify-content:center; gap:8px 14px; margin:8px auto 0; max-width:360px; }
+.status-legend span { display:inline-flex; align-items:center; gap:5px; color:var(--muted); font-size:11px; }
+.status-legend i { width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
+.status-legend b { color:var(--ink); font-size:12px; }
 .bars {
   display: grid;
   gap: 13px;

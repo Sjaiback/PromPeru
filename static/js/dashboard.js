@@ -8,6 +8,7 @@
   Chart.defaults.font.family = "DM Sans, Arial, sans-serif";
   Chart.defaults.color = muted;
   Chart.defaults.animation = { duration: 750, easing: "easeOutQuart" };
+  Chart.register({ id:"barValues", afterDatasetsDraw:function(chart){ if(chart.config.type !== "bar") return; var context=chart.ctx, horizontal=chart.options.indexAxis === "y"; context.save(); context.fillStyle=ink; context.font="700 11px DM Sans, Arial"; chart.getDatasetMeta(0).data.forEach(function(bar,index){ var value=chart.data.datasets[0].data[index]; if(horizontal){ context.textAlign="left"; context.textBaseline="middle"; context.fillText(value,bar.x+8,bar.y); }else{ context.textAlign="center"; context.textBaseline="bottom"; context.fillText(value,bar.x,bar.y-7); } }); context.restore(); } });
   function safe(values) { return values && values.length ? values : [0]; }
   function labels(values) { return values && values.length ? values : ["Sin registros"]; }
   function tooltip() { return { enabled:true, backgroundColor:ink, padding:13, cornerRadius:10, displayColors:true, callbacks:{ label:function(item){ return " " + item.label + ": " + item.formattedValue + " atenciones"; } } }; }
@@ -15,7 +16,7 @@
   function colorsFor(set, regional) { return labels(set.labels).map(function(label,index){ return regional ? (territoryColors[label] || palette[index % palette.length]) : palette[index % palette.length]; }); }
   function bar(id, set, horizontal, regional) {
     var el = document.getElementById(id); if (!el) return;
-    new Chart(el, { type:"bar", data:{ labels:labels(set.labels), datasets:[{ data:safe(set.values), borderRadius:9, borderSkipped:false, backgroundColor:colorsFor(set, regional) }] }, options:{ indexAxis:horizontal ? "y" : "x", maintainAspectRatio:false, interaction:{ mode:"nearest", intersect:true }, plugins:{ legend:{display:false}, tooltip:tooltip() }, scales:{ x:axis(), y:axis() } } });
+    new Chart(el, { type:"bar", data:{ labels:labels(set.labels), datasets:[{ data:safe(set.values), borderRadius:9, borderSkipped:false, backgroundColor:colorsFor(set, regional) }] }, options:{ indexAxis:horizontal ? "y" : "x", layout:{ padding:horizontal ? {right:28} : {top:22} }, maintainAspectRatio:false, interaction:{ mode:"nearest", intersect:true }, plugins:{ legend:{display:false}, tooltip:tooltip() }, scales:{ x:axis(), y:axis() } } });
   }
   function doughnut(id, set, colors) {
     var el = document.getElementById(id); if (!el) return;
@@ -33,7 +34,10 @@
   }
   drawTrend("dia");
   document.querySelectorAll("[data-chart-period]").forEach(function(button){ button.addEventListener("click",function(){ var period = button.dataset.chartPeriod; document.querySelectorAll("[data-chart-period]").forEach(function(item){ item.classList.toggle("is-active",item === button); }); drawTrend(period); }); });
-  doughnut("statusChart", {labels:data.estados.labels,values:data.estados.values}, data.estados.colors && data.estados.colors.length ? data.estados.colors : palette);
+  var statusColors = data.estados.colors && data.estados.colors.length ? data.estados.colors : palette;
+  doughnut("statusChart", {labels:data.estados.labels,values:data.estados.values}, statusColors);
+  var statusLegend = document.getElementById("statusLegend");
+  if(statusLegend) statusLegend.innerHTML = labels(data.estados.labels).map(function(label,index){ return '<span><i style="background:'+statusColors[index % statusColors.length]+'"></i>'+label+' <b>'+safe(data.estados.values)[index]+'</b></span>'; }).join("");
   bar("channelChart", data.canales, false, false);
   bar("advisorChart", data.responsables, true, false);
   bar("regionChart", data.regiones, false, true);

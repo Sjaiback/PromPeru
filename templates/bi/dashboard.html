@@ -38,6 +38,7 @@
   <article class="visual-card visual-donut">
     <div class="visual-heading"><div><span class="eyebrow">Seguimiento</span><h2>Estado de atención</h2></div></div>
     <div class="canvas-wrap canvas-donut"><canvas id="statusChart" aria-label="Estado de las atenciones" role="img"></canvas></div>
+    <div class="status-legend" id="statusLegend" aria-label="Leyenda de estados"></div>
   </article>
 </section>
 
@@ -57,5 +58,5 @@
 {% endblock %}
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
-<script src="{% static 'js/dashboard.js' %}?v=20260806-3"></script>
+<script src="{% static 'js/dashboard.js' %}?v=20260806-4"></script>
 {% endblock %}
