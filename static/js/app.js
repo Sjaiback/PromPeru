@@ -122,47 +122,13 @@
       if (actualizar.checked) perform(true);
       else show(company, false);
     });
-    function clearPublicForm() {
-      form.reset();
-      show(required, false);
-      show(company, false);
-      show(submit, false);
-      show(toggle, false);
-      if (hint) {
-        hint.textContent =
-          "Usaremos el documento únicamente para encontrar tu registro.";
-        hint.classList.remove("found");
-      }
-      if (actualizar) actualizar.checked = false;
-      form
-        .querySelectorAll(".field-error, .errorlist, .error-box")
-        .forEach(function (el) {
-          el.remove();
-        });
-    }
     form.addEventListener("submit", function (e) {
       if (form.dataset.publico !== "1") return;
-      e.preventDefault();
+      // El formulario público debe navegar a la pantalla de confirmación.
+      // Antes se enviaba por AJAX y se limpiaba silenciosamente, lo que impedía
+      // que el cliente viera el responsable asignado y la cuenta regresiva.
       var submitButton = form.querySelector('[type="submit"]');
       if (submitButton) submitButton.disabled = true;
-      fetch(form.action || window.location.href, {
-        method: "POST",
-        body: new FormData(form),
-        credentials: "same-origin",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-      })
-        .then(function (response) {
-          if (response.ok) {
-            clearPublicForm();
-          }
-          return response.json();
-        })
-        .catch(function () {
-          // If AJAX fails, let the normal browser behavior continue on next page load.
-        })
-        .finally(function () {
-          if (submitButton) submitButton.disabled = false;
-        });
     });
     if (form.querySelector(".field-error,.errorlist")) {
       show(required, true);
