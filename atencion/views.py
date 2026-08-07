@@ -288,7 +288,11 @@ def atencion_anular(request, pk):
 def auditoria(request):
     perfil = perfil_activo(request.user)
     if not request.user.is_superuser and (
-        not perfil or perfil.rol not in ("bi", "admin")
+        not perfil
+        or (
+            perfil.rol not in ("coordinador", "bi", "admin")
+            and not perfil.puede_archivar
+        )
     ):
         return render(request, "atencion/sin_acceso.html", status=403)
     from .models import RegistroAuditoria
