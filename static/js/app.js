@@ -153,30 +153,13 @@
       }, 1000);
       if (close) close.onclick = finish;
     }
+    if (form.dataset.confirmacionResponsable) {
+      showConfirmation(form.dataset.confirmacionResponsable);
+    }
     form.addEventListener("submit", function (e) {
       if (form.dataset.publico !== "1") return;
-      e.preventDefault();
       var submitButton = form.querySelector('[type="submit"]');
       if (submitButton) submitButton.disabled = true;
-      fetch(form.action || window.location.href, {
-        method: "POST",
-        body: new FormData(form),
-        credentials: "same-origin",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-      })
-        .then(function (response) {
-          return response.json().then(function (data) {
-            if (!response.ok || !data.success) throw new Error("invalid-form");
-            showConfirmation(data.responsable);
-          });
-        })
-        .catch(function () {
-          hint.textContent = "No fue posible registrar la atención. Revisa los datos e inténtalo nuevamente.";
-          hint.classList.remove("found");
-        })
-        .finally(function () {
-          if (submitButton) submitButton.disabled = false;
-        });
     });
     if (form.querySelector(".field-error,.errorlist")) {
       show(required, true);

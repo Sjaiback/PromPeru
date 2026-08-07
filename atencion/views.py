@@ -39,7 +39,7 @@ def perfil_activo(user):
     return perfil if perfil and perfil.activo else None
 
 
-def form_registro(request, publico=False):
+def form_registro(request, publico=False, confirmacion_responsable=None):
     asesor = None if publico else perfil_activo(request.user)
     form = AtencionRegistroForm(request.POST or None, asesor=asesor)
     if request.method == "POST" and form.is_valid():
@@ -82,7 +82,7 @@ def form_registro(request, publico=False):
             # Solo guardamos temporalmente el responsable para la confirmación;
             # no exponemos datos del cliente en la siguiente pantalla.
             request.session["responsable_ultima_atencion"] = atencion.responsable.nombre
-            return redirect("atencion:gracias")
+            return redirect("atencion:publico")
         messages.success(request, f"Atención #{atencion.pk} registrada correctamente.")
         return redirect("atencion:detalle", pk=atencion.pk)
     if (
@@ -95,7 +95,12 @@ def form_registro(request, publico=False):
     return render(
         request,
         "atencion/registro.html",
-        {"form": form, "publico": publico, "asesor": asesor},
+        {
+            "form": form,
+            "publico": publico,
+            "asesor": asesor,
+            "confirmacion_responsable": confirmacion_responsable,
+        },
     )
 
 
@@ -103,7 +108,16 @@ def form_registro(request, publico=False):
 def registro_publico(request):
     if not es_cliente(request.user):
         return redirect("atencion:inicio")
-    return form_registro(request, publico=True)
+    confirmacion_responsable = None
+    if request.method == "GET":
+        confirmacion_responsable = request.session.pop(
+            "responsable_ultima_atencion", None
+        )
+    return form_registro(
+        request,
+        publico=True,
+        confirmacion_responsable=confirmacion_responsable,
+    )
 
 
 @login_required
