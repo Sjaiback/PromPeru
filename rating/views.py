@@ -6,6 +6,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.shortcuts import get_object_or_404, redirect, render
+import re
 from django.utils.text import slugify
 from atencion.models import Empresa, Region, Sector
 from .forms import ImportarExcelForm
@@ -265,7 +266,23 @@ def evaluar_empresa(request, empresa_id):
         ]
         fields = [form[name] for name in names if name in form.fields]
         if fields:
-            categorias.append((categoria, fields))
+            grupos = []
+            for field in fields:
+                grupo = (field.help_text or "").strip()
+                # El Excel repite la cabecera del grupo en cada columna. La
+                # mostramos una sola vez y dejamos cada pregunta limpia.
+                prefijo = f"{grupo} — "
+                if grupo and field.label.casefold().startswith(prefijo.casefold()):
+                    field.field.label = field.label[len(prefijo) :]
+                if not grupos or grupos[-1]["nombre"] != grupo:
+                    grupos.append({"nombre": grupo, "fields": []})
+                grupos[-1]["fields"].append(field)
+
+            categoria_base = re.sub(r"\s*:\s*\d+\s*$", "", categoria.nombre)
+            for grupo in grupos:
+                if grupo["nombre"].casefold() == categoria_base.casefold():
+                    grupo["nombre"] = ""
+            categorias.append((categoria, grupos))
     return render(
         request,
         "rating/evaluar.html",

@@ -841,8 +841,21 @@ tr:last-child td {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 18px;
-  padding: 10px 22px 24px;
+  padding: 14px 22px 24px;
+}
+.evaluation-groups {
   border-top: 1px solid var(--line);
+}
+.evaluation-group + .evaluation-group {
+  border-top: 1px solid var(--line);
+}
+.evaluation-group h2 {
+  margin: 0;
+  padding: 18px 22px 0;
+  color: var(--ink);
+  font: 700 13px/1.35 "Manrope";
+  letter-spacing: 0.025em;
+  text-transform: uppercase;
 }
 .evaluation-grid label > small {
   color: var(--muted);

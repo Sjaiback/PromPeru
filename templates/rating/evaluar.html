@@ -12,19 +12,24 @@
   </div>
 </header>
 <form method="post" class="evaluation-form" novalidate>
-  {% csrf_token %}{% for categoria, fields in categorias %}
+  {% csrf_token %}{% for categoria, grupos in categorias %}
   <details class="evaluation-section" {% if forloop.first %}open{% endif %}>
     <summary>
       <span>{{ forloop.counter|stringformat:'02d' }}</span
       ><strong>{{ categoria.nombre }}</strong
-      ><small>{{ fields|length }} preguntas</small>
+      ><small>{% for grupo in grupos %}{{ grupo.fields|length }}{% if not forloop.last %} + {% endif %}{% endfor %} preguntas</small>
     </summary>
-    <div class="evaluation-grid">
-      {% for field in fields %}<label
-        ><span>{{ field.label }}</span>{{ field }}{% if field.help_text %}<small
-          >{{ field.help_text }}</small
-        >{% endif %}{{ field.errors }}</label
-      >{% endfor %}
+    <div class="evaluation-groups">
+      {% for grupo in grupos %}
+        <section class="evaluation-group">
+          {% if grupo.nombre %}<h2>{{ grupo.nombre }}</h2>{% endif %}
+          <div class="evaluation-grid">
+            {% for field in grupo.fields %}<label
+              ><span>{{ field.label }}</span>{{ field }}{{ field.errors }}</label
+            >{% endfor %}
+          </div>
+        </section>
+      {% endfor %}
     </div>
   </details>
   {% endfor %}
