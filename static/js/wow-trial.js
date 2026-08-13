@@ -55,9 +55,32 @@
     });
   }
 
+  function initThemeToggle() {
+    var button = document.querySelector("[data-theme-toggle]");
+    if (!button) return;
+    var label = button.querySelector("[data-theme-label]");
+    function currentTheme() {
+      return document.documentElement.dataset.theme === "dark" ? "dark" : "light";
+    }
+    function render() {
+      var dark = currentTheme() === "dark";
+      button.setAttribute("aria-pressed", dark ? "true" : "false");
+      button.setAttribute("aria-label", dark ? "Cambiar a tema claro" : "Cambiar a tema oscuro");
+      if (label) label.textContent = dark ? "Tema claro" : "Tema oscuro";
+    }
+    button.addEventListener("click", function () {
+      var next = currentTheme() === "dark" ? "light" : "dark";
+      document.documentElement.dataset.theme = next;
+      try { localStorage.setItem("promperu-theme", next); } catch (error) {}
+      render();
+    });
+    render();
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     safe(initWowReveal);
     safe(initMagneticButtons);
     safe(initCardLight);
+    safe(initThemeToggle);
   });
 })();

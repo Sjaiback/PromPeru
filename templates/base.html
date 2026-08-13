@@ -14,6 +14,16 @@
         {% block title %}PROMPERÚ Centro Este{% endblock %}
     </title>
 
+    <script>
+        (function () {
+            try {
+                if (localStorage.getItem("promperu-theme") === "dark") {
+                    document.documentElement.dataset.theme = "dark";
+                }
+            } catch (error) {}
+        })();
+    </script>
+
     <link
         rel="preload"
         as="image"
@@ -34,7 +44,7 @@
 
     <link
         rel="stylesheet"
-        href="{% static 'css/wow-trial.css' %}?v=20260813-1"
+        href="{% static 'css/wow-trial.css' %}?v=20260813-3"
     />
 
     <script
@@ -44,7 +54,7 @@
 
     <script
         defer
-        src="{% static 'js/wow-trial.js' %}?v=20260813-1"
+        src="{% static 'js/wow-trial.js' %}?v=20260813-3"
     ></script>
 </head>
 
@@ -90,55 +100,74 @@
 
             <nav aria-label="Navegación principal">
 
-                <a href="{% url 'atencion:inicio' %}" data-index="01">
+                <a href="{% url 'atencion:inicio' %}">
+                    <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#home"></use></svg>
                     Resumen
                 </a>
 
-                <a href="{% url 'atencion:registrar' %}" data-index="02">
+                <a href="{% url 'atencion:registrar' %}">
+                    <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#square-plus"></use></svg>
                     Nueva atención
                 </a>
 
-                <a href="{% url 'atencion:empresas' %}" data-index="03">
+                <a href="{% url 'atencion:empresas' %}">
+                    <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#building"></use></svg>
                     Empresas y contactos
                 </a>
 
-                <a href="{% url 'seguimiento:bandeja' %}" data-index="04">
+                <a href="{% url 'seguimiento:bandeja' %}">
+                    <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#list-checks"></use></svg>
                     Seguimiento
                 </a>
 
-                <a href="{% url 'atencion:mi_perfil' %}" data-index="05">
+                <a href="{% url 'atencion:mi_perfil' %}">
+                    <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#user"></use></svg>
                     Mi perfil
                 </a>
 
                 {% if user.is_superuser or user.perfil_asesor.acceso_bi %}
-                    <a href="{% url 'bi:dashboard' %}" data-index="06">
+                    <a href="{% url 'bi:dashboard' %}">
+                        <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#chart"></use></svg>
                         Dashboards
                     </a>
                 {% endif %}
 
                 {% if user.is_superuser or user.perfil_asesor.puede_archivar %}
-                    <a href="{% url 'bi:archivos' %}" data-index="07">
+                    <a href="{% url 'bi:archivos' %}">
+                        <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#archive"></use></svg>
                         Archivo mensual
                     </a>
 
-                    <a href="{% url 'atencion:auditoria' %}" data-index="08">
+                    <a href="{% url 'atencion:auditoria' %}">
+                        <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#shield-check"></use></svg>
                         Auditoría
                     </a>
                 {% endif %}
 
                 {% if user.is_staff %}
-                    <a href="{% url 'rating:importar' %}" data-index="09">
+                    <a href="{% url 'rating:importar' %}">
+                        <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#file-up"></use></svg>
                         Importar rating
                     </a>
                 {% endif %}
 
                 {% if user.is_staff or puede_gestionar_usuarios %}
-                    <a href="{% url 'atencion:configuracion' %}" data-index="10">
+                    <a href="{% url 'atencion:configuracion' %}">
+                        <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#settings"></use></svg>
                         Configuración
                     </a>
                 {% endif %}
 
             </nav>
+
+            <button class="theme-toggle" type="button" data-theme-toggle aria-pressed="false">
+                <span class="theme-toggle__icon" aria-hidden="true">
+                    <svg class="theme-icon theme-icon--moon"><use href="{% static 'img/nav-icons.svg' %}#moon"></use></svg>
+                    <svg class="theme-icon theme-icon--sun"><use href="{% static 'img/nav-icons.svg' %}#sun"></use></svg>
+                </span>
+                <span data-theme-label>Tema oscuro</span>
+                <i aria-hidden="true"></i>
+            </button>
 
             <div class="user-card">
 
