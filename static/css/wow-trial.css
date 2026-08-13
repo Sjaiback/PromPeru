@@ -44,13 +44,14 @@ body.app-body {
 }
 
 body.app-body .sidebar {
-  inset: 14px auto 14px 14px;
-  width: 264px;
-  height: calc(100dvh - 28px);
-  padding: 20px 16px 17px;
+  inset: 0 auto 0 0;
+  width: 278px;
+  height: 100dvh;
+  padding: 18px 18px 16px;
   overflow: hidden;
-  border: 1px solid rgba(255,255,255,.82);
-  border-radius: 28px;
+  border: 0;
+  border-right: 1px solid rgba(23,20,22,.09);
+  border-radius: 0;
   color: var(--wow-ink);
   background: rgba(255,255,255,.78);
   box-shadow: 0 25px 80px rgba(45,30,32,.13), inset 0 1px 0 #fff;
@@ -58,22 +59,32 @@ body.app-body .sidebar {
   -webkit-backdrop-filter: blur(28px) saturate(155%);
 }
 body.app-body .brand-official {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 100%;
-  min-height: 86px;
-  padding: 4px 12px 14px;
+  margin: 0;
+  min-height: 92px;
+  padding: 5px 12px 13px;
   border-bottom: 1px solid rgba(23,20,22,.09);
   border-radius: 0;
   background: transparent;
 }
-body.app-body .brand-official img { width: 166px; }
+body.app-body .brand-official img { max-height: none; }
+body.app-body .brand-official .brand-logo--light { width: 176px; }
+body.app-body .brand-official .brand-logo--dark { display: none; width: 214px; }
 body.app-body .sidebar-label {
   margin: 17px 12px 7px;
   color: #938c8e;
   letter-spacing: .2em;
 }
 body.app-body .sidebar nav {
+  flex: 1 1 auto;
+  min-height: 0;
   gap: 3px;
   margin-top: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   scrollbar-width: thin;
 }
 body.app-body .sidebar nav a {
@@ -87,7 +98,7 @@ body.app-body .sidebar nav a {
   border: 1px solid transparent;
   border-radius: 13px;
   color: #554f51;
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 600;
   transform: none;
   transition: color .28s, background .28s, border-color .28s, transform .28s var(--wow-ease);
@@ -151,25 +162,27 @@ body.app-body .sidebar nav a.is-active .nav-icon { color: var(--wow-red); }
 .theme-toggle > i { position: relative; width: 34px; height: 20px; border-radius: 99px; background: #d9d3d4; box-shadow: inset 0 0 0 1px rgba(23,20,22,.07); }
 .theme-toggle > i::after { content: ""; position: absolute; width: 14px; height: 14px; left: 3px; top: 3px; border-radius: 50%; background: #fff; box-shadow: 0 2px 7px rgba(0,0,0,.18); transition: transform .32s var(--wow-ease), background .25s; }
 body.app-body .user-card {
-  margin-top: 10px;
-  padding: 14px 5px 2px;
+  flex: 0 0 auto;
+  margin-top: 8px;
+  padding: 15px 4px 0;
   border-top: 1px solid rgba(23,20,22,.1);
   color: var(--wow-ink);
   background: transparent;
 }
 body.app-body .user-card small { color: #817a7c; font-size: 11px; line-height: 1.35; }
+body.app-body .user-card strong { font-size: 14.5px; }
 body.app-body .avatar {
   background: linear-gradient(145deg, var(--wow-red), #b8081b);
   box-shadow: 0 8px 22px rgba(227,19,43,.24);
 }
-body.app-body .link-button { color: #6f686a; font-weight: 700; }
+body.app-body .link-button { color: #6f686a; font-size: 13.5px; font-weight: 700; }
 body.app-body .link-button:hover { color: var(--wow-red); }
 
 body.app-body .app-main {
   position: relative;
   width: auto;
   max-width: none;
-  margin-left: 292px;
+  margin-left: 278px;
   padding: 52px clamp(28px, 4.5vw, 76px) 90px;
 }
 
@@ -386,16 +399,19 @@ body.app-body .hero-metric::after {
   color: #f6f1f2;
   border-color: rgba(255,255,255,.1);
   background: rgba(20,17,19,.88);
-  box-shadow: 0 30px 90px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.08);
+  box-shadow: 18px 0 70px rgba(0,0,0,.28), inset -1px 0 0 rgba(255,255,255,.04);
 }
 [data-theme="dark"] body.app-body .brand-official {
   margin-bottom: 3px;
-  padding: 8px 12px 13px;
-  border: 1px solid rgba(255,255,255,.94);
-  border-radius: 17px;
-  background: rgba(255,255,255,.96);
-  box-shadow: 0 13px 35px rgba(0,0,0,.28), inset 0 1px 0 #fff;
+  padding: 0 6px 9px;
+  border: 0;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
+[data-theme="dark"] body.app-body .brand-official .brand-logo--light { display: none; }
+[data-theme="dark"] body.app-body .brand-official .brand-logo--dark { display: block; }
 [data-theme="dark"] body.app-body .sidebar-close {
   color: #171315;
   border-color: rgba(23,19,21,.12);
@@ -461,7 +477,7 @@ body.app-body .hero-metric::after {
 [data-theme="dark"] body.app-body .entry-summary__metrics > *,
 [data-theme="dark"] body.app-body .entry-summary__close { color: #f5f1f2; border-color: rgba(255,255,255,.1); background: rgba(255,255,255,.06); }
 @media (max-width: 1000px) {
-  body.app-body .sidebar { inset: 0 auto 0 0; width: min(86vw, 300px); height: 100dvh; border-radius: 0 26px 26px 0; }
+  body.app-body .sidebar { inset: 0 auto 0 0; width: min(86vw, 310px); height: 100dvh; border-radius: 0; }
   body.app-body .app-main { margin-left: 0; padding: 76px 24px 70px; }
 }
 @media (max-width: 720px) {

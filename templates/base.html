@@ -30,6 +30,12 @@
         href="{% static 'img/logo-promperu-hd.webp' %}"
     />
 
+    <link
+        rel="preload"
+        as="image"
+        href="{% static 'img/logo-promperu-blanco-oscuro.webp' %}"
+    />
+
     {% block preload %}{% endblock %}
 
     <link
@@ -44,7 +50,7 @@
 
     <link
         rel="stylesheet"
-        href="{% static 'css/wow-trial.css' %}?v=20260813-3"
+        href="{% static 'css/wow-trial.css' %}?v=20260813-5"
     />
 
     <script
@@ -85,10 +91,20 @@
                 href="{% url 'atencion:inicio' %}"
             >
                 <img
+                    class="brand-logo brand-logo--light"
                     src="{% static 'img/logo-promperu-hd.webp' %}"
                     alt="PROMPERÚ"
                     width="170"
                     height="73"
+                />
+
+                <img
+                    class="brand-logo brand-logo--dark"
+                    src="{% static 'img/logo-promperu-blanco-oscuro.webp' %}"
+                    alt=""
+                    width="1024"
+                    height="576"
+                    aria-hidden="true"
                 />
             </a>
 
