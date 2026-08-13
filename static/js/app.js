@@ -190,6 +190,27 @@
       });
     }, 4500);
   }
+  function initEntrySummary() {
+    var modal = document.querySelector("[data-entry-summary]");
+    if (!modal) return;
+    var closeButtons = modal.querySelectorAll("[data-entry-summary-close]");
+    var previousOverflow = document.body.style.overflow;
+    function close() {
+      modal.classList.add("is-closing");
+      document.body.style.overflow = previousOverflow;
+      setTimeout(function () { modal.remove(); }, 180);
+    }
+    document.body.style.overflow = "hidden";
+    closeButtons.forEach(function (button) { button.addEventListener("click", close); });
+    document.addEventListener("keydown", function onKeydown(event) {
+      if (event.key === "Escape" && document.body.contains(modal)) {
+        close();
+        document.removeEventListener("keydown", onKeydown);
+      }
+    });
+    var focusTarget = modal.querySelector(".entry-summary__close");
+    if (focusTarget) focusTarget.focus();
+  }
   function initReveal() {
     var items = document.querySelectorAll("[data-reveal]");
     if (!items.length) return;
@@ -263,6 +284,7 @@
     safe(initMenu, "menu");
     safe(initDocumentLookup, "document");
     safe(initMessages, "messages");
+    safe(initEntrySummary, "entry-summary");
     safe(initReveal, "reveal");
     safe(initPassword, "password");
     safe(initLogin, "login");

@@ -1,4 +1,52 @@
 {% extends 'base.html' %}{% block content %}
+{% if resumen_entrada %}
+<div class="entry-summary" data-entry-summary role="dialog" aria-modal="true" aria-labelledby="entry-summary-title">
+  <button class="entry-summary__backdrop" type="button" data-entry-summary-close aria-label="Cerrar resumen"></button>
+  <section class="entry-summary__card">
+    <button class="entry-summary__close" type="button" data-entry-summary-close aria-label="Cerrar resumen">×</button>
+    <div class="entry-summary__heading">
+      <span class="entry-summary__mark" aria-hidden="true">{{ user.first_name|default:user.username|first|upper }}</span>
+      <div>
+        <span class="eyebrow">Resumen al ingresar</span>
+        <h2 id="entry-summary-title">Hola, {{ user.first_name|default:user.username }}. Esto requiere tu atención.</h2>
+        <p>Los datos se calcularon con las atenciones que puedes gestionar.</p>
+      </div>
+    </div>
+    <div class="entry-summary__metrics">
+      <a href="{% url 'seguimiento:bandeja' %}">
+        <span>Consultas pendientes</span>
+        <strong>{{ resumen_entrada.pendientes }}</strong>
+        <small>{% if resumen_entrada.pendientes %}Requieren seguimiento{% else %}No tienes consultas pendientes{% endif %} →</small>
+      </a>
+      <div>
+        <span>Empresas sin evaluar</span>
+        <strong>{{ resumen_entrada.empresas_sin_evaluar }}</strong>
+        <small>{% if resumen_entrada.empresas_sin_evaluar %}Falta completar su ficha{% else %}Todas cuentan con evaluación{% endif %}</small>
+      </div>
+    </div>
+    {% if resumen_entrada.evaluaciones %}
+    <div class="entry-summary__tasks">
+      <div class="entry-summary__tasks-title">
+        <strong>Evaluaciones pendientes</strong>
+        <span>Primero las más antiguas</span>
+      </div>
+      {% for atencion_pendiente in resumen_entrada.evaluaciones %}
+      <a href="{% url 'rating:evaluar_visita' atencion_pendiente.pk %}">
+        <span><strong>{{ atencion_pendiente.empresa.nombre }}</strong><small>{{ atencion_pendiente.empresa.numero_documento }} · {{ atencion_pendiente.fecha|date:'d M Y' }}</small></span>
+        <b>Evaluar →</b>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="entry-summary__clear"><span aria-hidden="true">✓</span><p><strong>Evaluaciones al día.</strong> No encontramos empresas pendientes de evaluar.</p></div>
+    {% endif %}
+    <div class="entry-summary__actions">
+      <button class="btn btn-ghost" type="button" data-entry-summary-close>Continuar al panel</button>
+      {% if resumen_entrada.pendientes %}<a class="btn btn-primary" href="{% url 'seguimiento:bandeja' %}">Revisar pendientes</a>{% endif %}
+    </div>
+  </section>
+</div>
+{% endif %}
 <header class="page-head">
   <div>
     <span class="eyebrow">Panel operativo</span>

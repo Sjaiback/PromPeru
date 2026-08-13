@@ -19,6 +19,14 @@ admin.site.index_title = "Catálogos y configuración"
 class PromPeruLoginView(LoginView):
     template_name = "registration/login.html"
 
+    def form_valid(self, form):
+        """Remember an internal login so the panel can show its work summary once."""
+        user = form.get_user()
+        perfil = getattr(user, "perfil_asesor", None)
+        if perfil and perfil.activo and perfil.rol in {"asesor", "coordinador"}:
+            self.request.session["mostrar_resumen_entrada"] = True
+        return super().form_valid(form)
+
     def get_success_url(self):
         from atencion.middleware import es_cliente
 

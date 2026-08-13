@@ -1,5 +1,6 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Min, Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
@@ -137,10 +138,47 @@ def inicio(request):
     qs = Atencion.objects.filter(anulada=False).select_related("empresa", "responsable")
     if perfil and perfil.rol == "asesor" and perfil.responsable:
         qs = qs.filter(responsable=perfil.responsable)
+    resumen_entrada = None
+    if (
+        perfil
+        and perfil.rol in {"asesor", "coordinador"}
+        and request.session.pop("mostrar_resumen_entrada", False)
+    ):
+        pendientes = qs.filter(
+            Q(gestion__isnull=True) | Q(gestion__estado__es_cerrado=False)
+        ).distinct()
+        # La ficha permanente se reutiliza en visitas futuras: solo alertamos
+        # empresas que todavía no tienen ninguna evaluación guardada.
+        sin_evaluacion = qs.filter(
+            empresa__evaluaciones_visita__isnull=True
+        ).distinct()
+        empresas_prioritarias = list(
+            sin_evaluacion.values("empresa_id")
+            .annotate(primera_fecha=Min("fecha"))
+            .order_by("primera_fecha")[:3]
+        )
+        evaluaciones = [
+            sin_evaluacion.filter(empresa_id=item["empresa_id"])
+            .order_by("fecha", "creado")
+            .first()
+            for item in empresas_prioritarias
+        ]
+        resumen_entrada = {
+            "pendientes": pendientes.count(),
+            "empresas_sin_evaluar": sin_evaluacion.values("empresa_id")
+            .distinct()
+            .count(),
+            "evaluaciones": evaluaciones,
+        }
     return render(
         request,
         "atencion/inicio.html",
-        {"recientes": qs[:8], "total": qs.count(), "perfil": perfil},
+        {
+            "recientes": qs[:8],
+            "total": qs.count(),
+            "perfil": perfil,
+            "resumen_entrada": resumen_entrada,
+        },
     )
 
 

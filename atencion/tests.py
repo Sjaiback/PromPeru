@@ -71,6 +71,52 @@ class FlujoAtencionTests(TestCase):
         self.assertContains(response, self.responsable.nombre)
         self.assertContains(response, "data-confirmation-modal")
 
+    def test_asesor_recibe_resumen_de_pendientes_una_vez_al_ingresar(self):
+        self.client.force_login(self.cliente)
+        self.client.post(reverse("atencion:publico"), self.payload_nuevo())
+        self.client.logout()
+
+        response = self.client.post(
+            reverse("login"),
+            {"username": self.user.username, "password": "test-pass-123"},
+            follow=True,
+        )
+
+        self.assertEqual(response.redirect_chain[-1][0], reverse("atencion:inicio"))
+        self.assertContains(response, "data-entry-summary")
+        self.assertContains(response, "Consultas pendientes")
+        self.assertContains(response, "Empresas sin evaluar")
+        self.assertEqual(response.context["resumen_entrada"]["pendientes"], 1)
+        self.assertEqual(
+            response.context["resumen_entrada"]["empresas_sin_evaluar"], 1
+        )
+
+        segunda_visita = self.client.get(reverse("atencion:inicio"))
+        self.assertNotContains(segunda_visita, "data-entry-summary")
+
+    def test_coordinador_recibe_resumen_global(self):
+        self.client.force_login(self.cliente)
+        self.client.post(reverse("atencion:publico"), self.payload_nuevo())
+        self.client.logout()
+        coordinador = get_user_model().objects.create_user(
+            "coordinador", password="coord-test-123"
+        )
+        PerfilAsesor.objects.create(
+            usuario=coordinador, cargo="Coordinador", rol="coordinador"
+        )
+
+        response = self.client.post(
+            reverse("login"),
+            {"username": coordinador.username, "password": "coord-test-123"},
+            follow=True,
+        )
+
+        self.assertContains(response, "data-entry-summary")
+        self.assertEqual(response.context["resumen_entrada"]["pendientes"], 1)
+        self.assertEqual(
+            response.context["resumen_entrada"]["empresas_sin_evaluar"], 1
+        )
+
     def test_cliente_existente_solo_responde_canal_y_responsable(self):
         self.client.force_login(self.cliente)
         self.client.post(reverse("atencion:publico"), self.payload_nuevo())
