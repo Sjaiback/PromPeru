@@ -32,13 +32,23 @@
         href="{% static 'css/overrides.css' %}?v=20260806-1"
     />
 
+    <link
+        rel="stylesheet"
+        href="{% static 'css/wow-trial.css' %}?v=20260813-1"
+    />
+
     <script
         defer
         src="{% static 'js/app.js' %}?v=20260813-2"
     ></script>
+
+    <script
+        defer
+        src="{% static 'js/wow-trial.js' %}?v=20260813-1"
+    ></script>
 </head>
 
-<body class="{% if not user.is_authenticated %}public-body{% endif %}">
+<body class="{% if user.is_authenticated and not request.es_cliente %}app-body{% elif not user.is_authenticated %}public-body{% endif %}">
 
     <a class="skip-link" href="#contenido">
         Ir al contenido
@@ -49,6 +59,12 @@
         data-page-progress
         aria-hidden="true"
     ></div>
+
+    {% if user.is_authenticated and not request.es_cliente %}
+        <div class="app-ambient" aria-hidden="true">
+            <i></i><i></i><i></i>
+        </div>
+    {% endif %}
 
     {% if user.is_authenticated and not request.es_cliente %}
 
@@ -74,50 +90,50 @@
 
             <nav aria-label="Navegación principal">
 
-                <a href="{% url 'atencion:inicio' %}">
+                <a href="{% url 'atencion:inicio' %}" data-index="01">
                     Resumen
                 </a>
 
-                <a href="{% url 'atencion:registrar' %}">
+                <a href="{% url 'atencion:registrar' %}" data-index="02">
                     Nueva atención
                 </a>
 
-                <a href="{% url 'atencion:empresas' %}">
+                <a href="{% url 'atencion:empresas' %}" data-index="03">
                     Empresas y contactos
                 </a>
 
-                <a href="{% url 'seguimiento:bandeja' %}">
+                <a href="{% url 'seguimiento:bandeja' %}" data-index="04">
                     Seguimiento
                 </a>
 
-                <a href="{% url 'atencion:mi_perfil' %}">
+                <a href="{% url 'atencion:mi_perfil' %}" data-index="05">
                     Mi perfil
                 </a>
 
                 {% if user.is_superuser or user.perfil_asesor.acceso_bi %}
-                    <a href="{% url 'bi:dashboard' %}">
+                    <a href="{% url 'bi:dashboard' %}" data-index="06">
                         Dashboards
                     </a>
                 {% endif %}
 
                 {% if user.is_superuser or user.perfil_asesor.puede_archivar %}
-                    <a href="{% url 'bi:archivos' %}">
+                    <a href="{% url 'bi:archivos' %}" data-index="07">
                         Archivo mensual
                     </a>
 
-                    <a href="{% url 'atencion:auditoria' %}">
+                    <a href="{% url 'atencion:auditoria' %}" data-index="08">
                         Auditoría
                     </a>
                 {% endif %}
 
                 {% if user.is_staff %}
-                    <a href="{% url 'rating:importar' %}">
+                    <a href="{% url 'rating:importar' %}" data-index="09">
                         Importar rating
                     </a>
                 {% endif %}
 
                 {% if user.is_staff or puede_gestionar_usuarios %}
-                    <a href="{% url 'atencion:configuracion' %}">
+                    <a href="{% url 'atencion:configuracion' %}" data-index="10">
                         Configuración
                     </a>
                 {% endif %}

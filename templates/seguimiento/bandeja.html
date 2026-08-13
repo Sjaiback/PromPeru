@@ -1,2 +1,56 @@
-{% extends 'base.html' %}{% block content %}<header class="page-head"><div><span class="eyebrow">Módulo 02</span><h1>Bandeja de seguimiento</h1><p>Prioriza lo pendiente y conserva cada interacción.</p></div></header><form class="filters" method="get"><label>Estado<select name="estado" class="form-control" onchange="this.form.submit()"><option value="">Todos</option>{% for e in estados %}<option value="{{ e.pk }}" {% if estado_actual == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.nombre }}</option>{% endfor %}</select></label></form><div class="kanban-list">{% for g in gestiones %}<a class="task-card" href="{% url 'seguimiento:gestionar' g.atencion_id %}"><span class="status-dot" style="--status:{{ g.estado.color }}"></span><div><small>#{{ g.atencion_id }} · {{ g.atencion.fecha|date:'d M' }}</small><h2>{{ g.atencion.empresa.nombre }}</h2><p>{{ g.atencion.tema_consulta|truncatechars:110 }}</p></div><div class="task-meta"><span class="pill">{{ g.estado.nombre }}</span><small>{{ g.atencion.responsable.nombre }}</small></div></a>{% empty %}<div class="empty-card">No hay tareas con este filtro.</div>{% endfor %}</div>{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Seguimiento · PROMPERÚ Centro Este{% endblock %}
+{% block content %}
+<section class="follow-hero" data-wow-reveal>
+  <div class="follow-hero__copy">
+    <p class="page-overline"><span></span> Centro de seguimiento</p>
+    <h1>Las conversaciones que<br><em>mueven oportunidades.</em></h1>
+    <p>Una vista viva de cada atención, su estado y el siguiente paso del equipo.</p>
+  </div>
+  <div class="follow-live" aria-label="Resumen de seguimientos">
+    <span class="follow-live__pulse"></span>
+    <div><strong>{{ resumen.pendientes }}</strong><small>requieren atención</small></div>
+    <span class="follow-live__line"></span>
+    <div><strong>{{ resumen.cerradas }}</strong><small>casos resueltos</small></div>
+  </div>
+</section>
 
+<section class="follow-toolbar" data-wow-reveal>
+  <div>
+    <span class="follow-toolbar__count">{{ resumen.total }}</span>
+    <p><strong>Atenciones en seguimiento</strong><small>Actualizadas por el equipo regional</small></p>
+  </div>
+  <form method="get">
+    <label for="estado-seguimiento">Filtrar por estado</label>
+    <select id="estado-seguimiento" name="estado" class="form-control" onchange="this.form.submit()">
+      <option value="">Todos los estados</option>
+      {% for e in estados %}
+      <option value="{{ e.pk }}" {% if estado_actual == e.pk|stringformat:'s' %}selected{% endif %}>{{ e.nombre }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</section>
+
+<section class="follow-list" aria-label="Atenciones en seguimiento">
+  {% for g in gestiones %}
+  <a class="follow-card" href="{% url 'seguimiento:gestionar' g.atencion_id %}" data-wow-reveal data-wow-card>
+    <span class="follow-card__number">{{ forloop.counter|stringformat:'02d' }}</span>
+    <span class="follow-card__status" style="--status:{{ g.estado.color }}"><i></i>{{ g.estado.nombre }}</span>
+    <div class="follow-card__main">
+      <span>#{{ g.atencion_id }} · {{ g.atencion.fecha|date:'d M Y' }}</span>
+      <h2>{{ g.atencion.empresa.nombre }}</h2>
+      <p>{{ g.atencion.tema_consulta|default:'Sin tema de consulta registrado'|truncatechars:120 }}</p>
+    </div>
+    <div class="follow-card__owner">
+      <span>{{ g.atencion.responsable.nombre|slice:':1' }}</span>
+      <p><small>Responsable</small>{{ g.atencion.responsable.nombre }}</p>
+    </div>
+    <span class="follow-card__arrow" aria-hidden="true">↗</span>
+  </a>
+  {% empty %}
+  <div class="follow-empty" data-wow-reveal>
+    <span>✓</span><h2>La bandeja está despejada.</h2><p>No hay atenciones para este filtro.</p>
+  </div>
+  {% endfor %}
+</section>
+{% endblock %}

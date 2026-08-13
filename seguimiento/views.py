@@ -17,11 +17,23 @@ def bandeja(request):
     qs = GestionAtencion.objects.select_related(
         "atencion__empresa", "atencion__responsable", "estado"
     )
-    if not request.user.is_superuser and hasattr(request.user, "responsable"):
-        qs = qs.filter(atencion__responsable=request.user.responsable)
+    perfil = getattr(request.user, "perfil_asesor", None)
+    if (
+        not request.user.is_superuser
+        and perfil
+        and perfil.rol == "asesor"
+        and perfil.responsable_id
+    ):
+        qs = qs.filter(atencion__responsable=perfil.responsable)
+    resumen = {
+        "total": qs.count(),
+        "pendientes": qs.filter(estado__es_cerrado=False).count(),
+        "cerradas": qs.filter(estado__es_cerrado=True).count(),
+    }
     estado = request.GET.get("estado")
     if estado:
         qs = qs.filter(estado_id=estado)
+    qs = qs.order_by("-atencion__fecha", "-atencion__creado")
     return render(
         request,
         "seguimiento/bandeja.html",
@@ -29,6 +41,7 @@ def bandeja(request):
             "gestiones": qs,
             "estados": EstadoAtencion.objects.filter(activo=True),
             "estado_actual": estado,
+            "resumen": resumen,
         },
     )
 
