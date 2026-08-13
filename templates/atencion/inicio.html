@@ -38,14 +38,14 @@
       <tbody>
         {% for a in recientes %}
         <tr>
-          <td>{{ a.fecha|date:'d M Y' }}</td>
-          <td>
+          <td data-label="Fecha">{{ a.fecha|date:'d M Y' }}</td>
+          <td data-label="Empresa / persona">
             <strong>{{ a.empresa.nombre }}</strong
             ><small>{{ a.empresa.numero_documento }}</small>
           </td>
-          <td><span class="pill">{{ a.tipo_atencion }}</span></td>
-          <td>{{ a.responsable.nombre }}</td>
-          <td>
+          <td data-label="Canal"><span class="pill">{{ a.tipo_atencion }}</span></td>
+          <td data-label="Responsable">{{ a.responsable.nombre }}</td>
+          <td data-label="Detalle">
             <a
               href="{% url 'atencion:detalle' a.pk %}"
               aria-label="Ver atención"

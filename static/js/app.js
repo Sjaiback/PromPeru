@@ -10,11 +10,20 @@
   }
   function initMenu() {
     var button = document.querySelector("[data-menu]"),
-      side = document.getElementById("sidebar");
+      side = document.getElementById("sidebar"),
+      closers = document.querySelectorAll("[data-menu-close]");
     if (!button || !side) return;
-    button.addEventListener("click", function () {
-      side.classList.toggle("open");
-    });
+    function setMenu(open) {
+      side.classList.toggle("open", open);
+      document.body.classList.toggle("menu-open", open);
+      button.setAttribute("aria-expanded", open ? "true" : "false");
+      button.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+    }
+    button.addEventListener("click", function () { setMenu(!side.classList.contains("open")); });
+    closers.forEach(function (closer) { closer.addEventListener("click", function () { setMenu(false); }); });
+    side.querySelectorAll("nav a").forEach(function (link) { link.addEventListener("click", function () { setMenu(false); }); });
+    document.addEventListener("keydown", function (event) { if (event.key === "Escape") setMenu(false); });
+    addEventListener("resize", function () { if (innerWidth > 1000) setMenu(false); });
   }
   function initDocumentLookup() {
     var form = document.querySelector("[data-atencion-form]");

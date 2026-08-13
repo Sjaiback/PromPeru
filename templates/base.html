@@ -24,7 +24,7 @@
 
     <link
         rel="stylesheet"
-        href="{% static 'css/app.css' %}?v=20260807-5"
+        href="{% static 'css/app.css' %}?v=20260813-1"
     />
 
     <link
@@ -34,7 +34,7 @@
 
     <script
         defer
-        src="{% static 'js/app.js' %}?v=20260807-3"
+        src="{% static 'js/app.js' %}?v=20260813-1"
     ></script>
 </head>
 
@@ -65,6 +65,8 @@
                     height="73"
                 />
             </a>
+
+            <button type="button" class="sidebar-close" data-menu-close aria-label="Cerrar menú">×</button>
 
             <div class="sidebar-label">
                 Gestión regional
@@ -149,11 +151,15 @@
 
         </aside>
 
+        <button type="button" class="sidebar-backdrop" data-menu-close aria-label="Cerrar menú" tabindex="-1"></button>
+
         <button
             type="button"
             class="menu-toggle"
             data-menu
             aria-label="Abrir menú"
+            aria-controls="sidebar"
+            aria-expanded="false"
         >
             ☰
         </button>
