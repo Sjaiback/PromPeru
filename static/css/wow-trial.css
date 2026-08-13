@@ -414,8 +414,8 @@ body.app-body .hero-metric::after {
 [data-theme="dark"] body.app-body .brand-official .brand-logo--light { display: none; }
 [data-theme="dark"] body.app-body .brand-official .brand-logo--dark {
   display: block;
-  filter: grayscale(1) contrast(400%);
-  mix-blend-mode: screen;
+  filter: none;
+  mix-blend-mode: normal;
 }
 [data-theme="dark"] body.app-body .sidebar-close {
   color: #171315;
