@@ -85,8 +85,9 @@ body.app-body .sidebar nav {
   margin-top: 2px;
   overflow-y: auto;
   overscroll-behavior: contain;
-  scrollbar-width: thin;
+  scrollbar-width: none;
 }
+body.app-body .sidebar nav::-webkit-scrollbar { display: none; }
 body.app-body .sidebar nav a {
   position: relative;
   display: flex;
@@ -470,6 +471,76 @@ body.app-body .hero-metric::after {
   background: rgba(29,25,27,.8);
   box-shadow: 0 22px 70px rgba(0,0,0,.27), inset 0 1px 0 rgba(255,255,255,.06);
 }
+[data-theme="dark"] body.app-body .document-row {
+  border-color: rgba(255,255,255,.1);
+  background: rgba(255,255,255,.045);
+}
+[data-theme="dark"] body.app-body .document-hint {
+  color: #bdb5b8;
+  border: 1px solid rgba(255,255,255,.08);
+  background: rgba(255,255,255,.055);
+}
+[data-theme="dark"] body.app-body .document-hint.found {
+  color: #9ee0b2;
+  border-color: rgba(73,190,111,.2);
+  background: rgba(73,190,111,.1);
+}
+[data-theme="dark"] body.app-body .document-row label,
+[data-theme="dark"] body.app-body .form-grid label,
+[data-theme="dark"] body.app-body .stack label,
+[data-theme="dark"] body.app-body .filters label,
+[data-theme="dark"] body.app-body .mapping-grid label,
+[data-theme="dark"] body.app-body .evaluation-grid label,
+[data-theme="dark"] body.app-body .archive-builder label { color: #d6cfd1; }
+[data-theme="dark"] body.app-body option { color: #f5f1f2; background: #211d1f; }
+[data-theme="dark"] body.app-body input::placeholder,
+[data-theme="dark"] body.app-body textarea::placeholder { color: #81797c; }
+[data-theme="dark"] body.app-body .btn-ghost {
+  color: #eee8ea;
+  border-color: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.07);
+}
+[data-theme="dark"] body.app-body .btn-dark {
+  color: #171315;
+  background: #f4eff0;
+}
+
+/* Dashboard en modo oscuro: KPIs, filtros y controles con contraste consistente. */
+[data-theme="dark"] body.app-body .dashboard-kpis article {
+  color: #f5f1f2;
+  border-color: rgba(255,255,255,.1);
+  background: rgba(29,25,27,.82);
+  box-shadow: 0 20px 60px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.05);
+}
+[data-theme="dark"] body.app-body .dashboard-kpis span,
+[data-theme="dark"] body.app-body .dashboard-kpis small { color: #aaa2a5; }
+[data-theme="dark"] body.app-body .dashboard-kpis .kpi-featured {
+  background: linear-gradient(135deg, #292326, #171315);
+}
+[data-theme="dark"] body.app-body .dashboard-kpis .kpi-featured span,
+[data-theme="dark"] body.app-body .dashboard-kpis .kpi-featured small { color: #c7bec1; }
+[data-theme="dark"] body.app-body .chart-periods button {
+  color: #c8c0c3;
+  border-color: rgba(255,255,255,.12);
+  background: rgba(255,255,255,.065);
+}
+[data-theme="dark"] body.app-body .chart-periods button:hover,
+[data-theme="dark"] body.app-body .chart-periods button.is-active {
+  color: #171315;
+  border-color: #f4eff0;
+  background: #f4eff0;
+}
+[data-theme="dark"] body.app-body .status-legend span,
+[data-theme="dark"] body.app-body .dashboard-kpis span,
+[data-theme="dark"] body.app-body .dashboard-kpis small { color: #aaa2a5; }
+[data-theme="dark"] body.app-body .status-legend b,
+[data-theme="dark"] body.app-body .visual-heading h2,
+[data-theme="dark"] body.app-body .dashboard-tables h2 { color: #f5f1f2; }
+body.app-body .dashboard-filters {
+  grid-template-columns: repeat(4, minmax(140px, 1fr)) auto;
+  gap: 10px;
+}
+body.app-body .dashboard-filters label { min-width: 0; }
 [data-theme="dark"] body.app-body th,
 [data-theme="dark"] body.app-body td { border-color: rgba(255,255,255,.09); }
 [data-theme="dark"] body.app-body .pill { color: #ddd5d8; background: rgba(255,255,255,.08); }
@@ -479,10 +550,13 @@ body.app-body .hero-metric::after {
 @media (max-width: 1000px) {
   body.app-body .sidebar { inset: 0 auto 0 0; width: min(86vw, 310px); height: 100dvh; border-radius: 0; }
   body.app-body .app-main { margin-left: 0; padding: 76px 24px 70px; }
+  body.app-body .dashboard-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  body.app-body .dashboard-filters .btn { grid-column: 1 / -1; }
 }
 @media (max-width: 720px) {
   .app-ambient i { filter: blur(52px); }
   body.app-body .app-main { padding-inline: 15px; }
+  body.app-body .dashboard-filters { grid-template-columns: 1fr; }
   .follow-hero { padding-top: 6px; padding-bottom: 30px; }
   .follow-hero h1 { font-size: clamp(39px, 12.4vw, 56px); line-height: .94; }
   .follow-hero__copy > p:last-child { font-size: 15px; }

@@ -73,6 +73,7 @@
       document.documentElement.dataset.theme = next;
       try { localStorage.setItem("promperu-theme", next); } catch (error) {}
       render();
+      window.dispatchEvent(new CustomEvent("promperu:theme", { detail: { theme: next } }));
     });
     render();
   }
