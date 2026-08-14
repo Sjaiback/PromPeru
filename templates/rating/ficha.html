@@ -1,14 +1,13 @@
 {% extends 'base.html' %}{% load static %}
-{% block title %}Evaluación de visita · {{ empresa.nombre }}{% endblock %}
+{% block title %}Evaluación anual · {{ empresa.nombre }}{% endblock %}
 {% block content %}
 <header class="page-head rating-head">
   <div>
-    <span class="eyebrow">Evaluación de la atención #{{ atencion.pk }}</span>
+    <span class="eyebrow">Evaluación anual {{ anio }}</span>
     <h1>{{ empresa.nombre }}</h1>
-    <p>{{ empresa.numero_documento }} · Los datos guardados se reutilizarán en próximas visitas.</p>
   </div>
   <div class="rating-actions">
-    {% if evaluacion.pk and evaluacion.respuestas %}<a class="btn btn-ghost" href="{% url 'rating:exportar_evaluacion' atencion.pk %}">Descargar Excel</a>{% endif %}
+    {% if evaluacion.pk and evaluacion.respuestas %}<a class="btn btn-ghost" href="{% url 'rating:exportar_evaluacion' evaluacion.pk %}">Descargar Excel</a>{% endif %}
     <div class="rating-total"><span>Puntaje total</span><strong>{{ evaluacion.puntaje_total }}</strong></div>
   </div>
 </header>
@@ -61,7 +60,7 @@
   </section>
   {% endfor %}
   <div class="sticky-save ficha-save">
-    <a class="btn btn-ghost" href="{% url 'atencion:detalle' atencion.pk %}">Volver</a>
+    <a class="btn btn-ghost" href="{% url 'atencion:empresas' %}">Volver</a>
     <span>Los cambios actualizarán los datos permanentes de esta empresa.</span>
     <button class="btn btn-primary" type="submit">Guardar y calcular evaluación</button>
   </div>

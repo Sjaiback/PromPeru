@@ -3,24 +3,31 @@
   <div>
     <span class="eyebrow">Seguimiento #{{ atencion.pk }}</span>
     <h1>{{ atencion.empresa.nombre }}</h1>
-    <p>{{ atencion.tema_consulta }}</p>
   </div>
 </header>
 <div class="work-grid">
-  <form method="post" class="form-card" novalidate>
+  <form method="post" class="form-card" novalidate data-followup-form>
     {% csrf_token %}
     <fieldset>
       <legend><span>01</span> Estado de la gestión</legend>
-      <div class="form-grid">
-        {% for field in form %}<label
-          class="{% if field.name == 'observaciones' %}span-2{% endif %}"
-          ><span>{{ field.label }}</span>{{ field }}{{ field.errors }}</label
-        >{% endfor %}
+      {% if atencion.empresa.tipo_usuario == 'Estudiante' %}
+      <div class="practitioner-shortcut">
+        <label>{{ form.es_practicante }}<span><strong>Es practicante</strong><small>Completar automáticamente esta atención como consulta de prácticas.</small></span></label>
       </div>
-    </fieldset>
-    <fieldset>
-      <legend><span>02</span> Nueva entrada de seguimiento</legend>
-      <label><span>{{ log_form.detalle.label }}</span>{{ log_form.detalle }}{{ log_form.detalle.errors }}</label>
+      {% endif %}
+      <div class="form-grid">
+        <label class="span-2" data-followup-field="accion_realizada"><span>{{ form.accion_realizada.label }}</span>{{ form.accion_realizada }}{{ form.accion_realizada.errors }}</label>
+        <label data-followup-field="estado_atencion"><span>{{ form.estado_atencion.label }}</span>{{ form.estado_atencion }}{{ form.estado_atencion.errors }}</label>
+        <label data-followup-field="estado_seguimiento"><span>{{ form.estado_seguimiento.label }}</span>{{ form.estado_seguimiento }}{{ form.estado_seguimiento.errors }}</label>
+        <div class="span-2 observation-field" data-followup-field="observaciones">
+          <div class="observation-field__head">
+            <span>{{ form.observaciones.label }}</span>
+            <label class="observation-empty-toggle">{{ form.sin_observaciones }} <span>Sin observaciones</span></label>
+          </div>
+          {{ form.observaciones }}{{ form.observaciones.errors }}
+        </div>
+        <label class="span-2" data-followup-field="detalle_consulta"><span>{{ form.detalle_consulta.label }}</span>{{ form.detalle_consulta }}{{ form.detalle_consulta.errors }}</label>
+      </div>
     </fieldset>
     <button class="btn btn-primary" type="submit">
       Guardar actualización →
@@ -39,4 +46,47 @@
     {% endfor %}
   </aside>
 </div>
+<script>
+(function () {
+  var form = document.querySelector('[data-followup-form]');
+  if (!form) return;
+  var practicante = form.querySelector('#id_gestion-es_practicante');
+  var sinObservaciones = form.querySelector('#id_gestion-sin_observaciones');
+  var fields = {
+    detalle: form.querySelector('#id_gestion-detalle_consulta'),
+    accion: form.querySelector('#id_gestion-accion_realizada'),
+    estado: form.querySelector('#id_gestion-estado_atencion'),
+    seguimiento: form.querySelector('#id_gestion-estado_seguimiento'),
+    observaciones: form.querySelector('#id_gestion-observaciones')
+  };
+  function sincronizarObservaciones() {
+    if (!sinObservaciones || !fields.observaciones) return;
+    if (sinObservaciones.checked) fields.observaciones.value = '';
+    fields.observaciones.disabled = sinObservaciones.checked;
+    fields.observaciones.closest('.observation-field').classList.toggle('is-disabled', sinObservaciones.checked);
+  }
+  function completarPracticante() {
+    if (!practicante) return;
+    if (practicante.checked) {
+      fields.detalle.value = 'Prácticas Pre/Profesionales';
+      fields.accion.value = 'Brindó información sobre el proceso de prácticas a través de las convocatorias que se realiza en la plataforma de PROMPERÚ';
+      fields.estado.value = 'atendido';
+      fields.seguimiento.value = 'finalizado';
+      fields.observaciones.value = '';
+      if (sinObservaciones) sinObservaciones.checked = true;
+    } else {
+      Object.keys(fields).forEach(function (key) {
+        if (fields[key]) fields[key].value = '';
+      });
+      fields.estado.value = 'sin_atender';
+      fields.seguimiento.value = 'en_proceso';
+      if (sinObservaciones) sinObservaciones.checked = false;
+    }
+    sincronizarObservaciones();
+  }
+  if (practicante) practicante.addEventListener('change', completarPracticante);
+  if (sinObservaciones) sinObservaciones.addEventListener('change', sincronizarObservaciones);
+  sincronizarObservaciones();
+}());
+</script>
 {% endblock %}

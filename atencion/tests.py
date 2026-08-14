@@ -1,10 +1,11 @@
-from datetime import date
+from datetime import date, timedelta
 from django.contrib.auth import get_user_model
 from django.core import mail
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from .models import (
     Atencion,
+    AperturaFormularioPublico,
     Empresa,
     PerfilAsesor,
     Region,
@@ -56,6 +57,37 @@ class FlujoAtencionTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.client.force_login(self.cliente)
         self.assertEqual(self.client.get(reverse("atencion:publico")).status_code, 200)
+
+    def test_asesor_libera_y_desactiva_formulario_publico(self):
+        self.client.force_login(self.user)
+        control = reverse("atencion:controlar_formulario_publico")
+        response = self.client.post(control, {"accion": "activar"})
+        self.assertRedirects(response, control)
+        apertura = AperturaFormularioPublico.objects.get()
+        self.assertEqual(apertura.activado_por, self.user)
+        self.assertLessEqual(
+            apertura.fin_programado - apertura.inicio,
+            timedelta(minutes=30, seconds=1),
+        )
+
+        self.client.logout()
+        response = self.client.get(reverse("atencion:publico"))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Iniciar sesión")
+        self.assertEqual(
+            self.client.get(
+                reverse("atencion:buscar_documento"),
+                {"tipo": "DNI", "numero": "12345678"},
+            ).status_code,
+            200,
+        )
+
+        self.client.force_login(self.user)
+        self.client.post(control, {"accion": "desactivar"})
+        apertura.refresh_from_db()
+        self.assertEqual(apertura.desactivado_por, self.user)
+        self.client.logout()
+        self.assertEqual(self.client.get(reverse("atencion:publico")).status_code, 302)
 
     def test_publico_crea_empresa_atencion_y_auditoria(self):
         self.client.force_login(self.cliente)
@@ -132,6 +164,12 @@ class FlujoAtencionTests(TestCase):
         self.assertEqual(Empresa.objects.count(), 1)
         self.assertEqual(Atencion.objects.count(), 2)
 
+    def test_registro_inicial_no_pide_detallar_consulta(self):
+        self.client.force_login(self.cliente)
+        response = self.client.get(reverse("atencion:publico"))
+        self.assertNotContains(response, "DETALLAR CONSULTA")
+        self.assertNotContains(response, 'name="detalle_consulta"')
+
     def test_formulario_publico_ajax_devuelve_responsable_para_confirmacion(self):
         self.client.force_login(self.cliente)
         response = self.client.post(
@@ -142,6 +180,29 @@ class FlujoAtencionTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["success"], True)
         self.assertEqual(response.json()["responsable"], self.responsable.nombre)
+
+    def test_dni_estudiante_aplica_valores_automaticos(self):
+        self.client.force_login(self.cliente)
+        data = self.payload_nuevo()
+        data.update(
+            {
+                "tipo_documento": "DNI",
+                "numero_documento": "75371088",
+                "es_estudiante": "on",
+                "nombre": "Universidad Nacional del Centro",
+                "nombres_apellidos": "Estudiante Prueba",
+            }
+        )
+        response = self.client.post(reverse("atencion:publico"), data)
+        self.assertRedirects(response, reverse("atencion:publico"))
+        empresa = Empresa.objects.get(numero_documento="75371088")
+        atencion = Atencion.objects.get(empresa=empresa)
+        self.assertEqual(empresa.tipo_usuario, "Estudiante")
+        self.assertEqual(empresa.tipo_personeria, "Persona Natural")
+        self.assertEqual(empresa.cargo, "Estudiante")
+        self.assertEqual(empresa.oferta_producto_servicio, "Otros")
+        self.assertEqual(atencion.tipo_atencion, "Presencial")
+        self.assertEqual(atencion.tema_consulta, "Otros")
 
     def test_registro_asesor_fuerza_su_responsable(self):
         otro = Responsable.objects.create(nombre="Otro asesor")

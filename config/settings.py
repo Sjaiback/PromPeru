@@ -106,6 +106,12 @@ LOGOUT_REDIRECT_URL = "atencion:publico"
 SYSTEM_ADMIN_USERNAME = os.environ.get("DJANGO_SYSTEM_ADMIN_USERNAME", "jvillaverdemontes")
 DATA_UPLOAD_MAX_MEMORY_SIZE = 15 * 1024 * 1024
 
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_SERVICE_ROLE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY", "")
+SUPABASE_BACKUP_BUCKET = os.environ.get(
+    "SUPABASE_BACKUP_BUCKET", "promperu-respaldos"
+)
+
 EMAIL_BACKEND = os.environ.get(
     "DJANGO_EMAIL_BACKEND",
     "django.core.mail.backends.console.EmailBackend"
@@ -155,3 +161,11 @@ if os.environ.get("DB_HOST"):
             "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "0")),
         }
     }
+
+# The project URL can be inferred from Supabase's database user
+# (postgres.<project-reference>), so only the secret key is indispensable.
+if not SUPABASE_URL:
+    database_user = DATABASES.get("default", {}).get("USER", "")
+    if database_user.startswith("postgres."):
+        project_reference = database_user.split(".", 1)[1]
+        SUPABASE_URL = f"https://{project_reference}.supabase.co"

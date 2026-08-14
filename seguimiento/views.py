@@ -1,9 +1,10 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required, user_passes_test
+from django.db.models import Case, IntegerField, Value, When
 from django.shortcuts import get_object_or_404, redirect, render
 from atencion.models import Atencion
-from .forms import GestionForm, SeguimientoForm
-from .models import EstadoAtencion, GestionAtencion, SeguimientoLog
+from .forms import GestionForm
+from .models import EstadoAtencion, GestionAtencion
 
 
 def es_asesor(user):
@@ -27,19 +28,25 @@ def bandeja(request):
         qs = qs.filter(atencion__responsable=perfil.responsable)
     resumen = {
         "total": qs.count(),
-        "pendientes": qs.filter(estado__es_cerrado=False).count(),
-        "cerradas": qs.filter(estado__es_cerrado=True).count(),
+        "pendientes": qs.filter(estado_seguimiento="en_proceso").count(),
+        "cerradas": qs.filter(estado_seguimiento="finalizado").count(),
     }
     estado = request.GET.get("estado")
-    if estado:
-        qs = qs.filter(estado_id=estado)
-    qs = qs.order_by("-atencion__fecha", "-atencion__creado")
+    if estado in {"en_proceso", "finalizado"}:
+        qs = qs.filter(estado_seguimiento=estado)
+    qs = qs.annotate(
+        grupo_orden=Case(
+            When(estado_seguimiento="finalizado", then=Value(1)),
+            default=Value(0),
+            output_field=IntegerField(),
+        )
+    ).order_by("grupo_orden", "atencion__fecha", "atencion__hora", "atencion__creado")
     return render(
         request,
         "seguimiento/bandeja.html",
         {
             "gestiones": qs,
-            "estados": EstadoAtencion.objects.filter(activo=True),
+            "estados": GestionAtencion.ESTADOS_SEGUIMIENTO,
             "estado_actual": estado,
             "resumen": resumen,
         },
@@ -55,20 +62,16 @@ def gestionar(request, pk):
         atencion=atencion, defaults={"estado": inicial, "actualizado_por": request.user}
     )
     form = GestionForm(request.POST or None, instance=gestion, prefix="gestion")
-    log_form = SeguimientoForm(request.POST or None, prefix="log")
-    if request.method == "POST" and form.is_valid() and log_form.is_valid():
+    if request.method == "POST" and form.is_valid():
         obj = form.save(commit=False)
         obj.actualizado_por = request.user
+        atencion.detalle_consulta = form.cleaned_data.get("detalle_consulta", "")
+        atencion.save(update_fields=["detalle_consulta", "actualizado"])
         obj.save()
-        detalle = log_form.cleaned_data.get("detalle", "").strip()
-        if detalle:
-            SeguimientoLog.objects.create(
-                gestion=obj, detalle=detalle, autor=request.user
-            )
         messages.success(request, "Seguimiento actualizado.")
-        return redirect("seguimiento:gestionar", pk=pk)
+        return redirect("seguimiento:bandeja")
     return render(
         request,
         "seguimiento/gestionar.html",
-        {"atencion": atencion, "gestion": gestion, "form": form, "log_form": log_form},
+        {"atencion": atencion, "gestion": gestion, "form": form},
     )

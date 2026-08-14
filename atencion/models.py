@@ -3,6 +3,10 @@ from django.core.validators import RegexValidator
 from django.db import models
 from django.utils import timezone
 
+
+def hora_local_actual():
+    return timezone.localtime().time().replace(microsecond=0)
+
 TIPOS_ATENCION = [
     (x, x)
     for x in [
@@ -140,7 +144,7 @@ class Empresa(models.Model):
         Region, on_delete=models.PROTECT, related_name="empresas"
     )
     oferta_producto_servicio = models.TextField(
-        "OFERTA O PRODUCTO O SERVICIO CON EL QUE CUENTA O DE INTERÉS*"
+        "OFERTA, PRODUCTO O SERVICIO QUE OFRECE*"
     )
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)
@@ -161,6 +165,7 @@ class Empresa(models.Model):
 
 class Atencion(models.Model):
     fecha = models.DateField("FECHA*", default=timezone.localdate)
+    hora = models.TimeField("HORA DE ATENCIÓN", default=hora_local_actual)
     tipo_atencion = models.CharField(
         "TIPO DE ATENCIÓN*", max_length=30, choices=TIPOS_ATENCION
     )
@@ -174,6 +179,7 @@ class Atencion(models.Model):
         Empresa, on_delete=models.PROTECT, related_name="atenciones"
     )
     tema_consulta = models.TextField("REGISTRE EL TEMA DE CONSULTA", blank=True)
+    detalle_consulta = models.TextField("DETALLAR CONSULTA", blank=True)
     origen = models.CharField(
         max_length=20,
         choices=[
@@ -249,6 +255,63 @@ class ArchivoAtenciones(models.Model):
     class Meta:
         ordering = ["-generado"]
 
+    def __str__(self):
+        return f"Archivo {self.desde}–{self.hasta} ({self.total_atenciones})"
 
-def __str__(self):
-    return f"Archivo {self.desde}–{self.hasta} ({self.total_atenciones})"
+
+class AperturaFormularioPublico(models.Model):
+    activado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="aperturas_formulario_activadas",
+    )
+    inicio = models.DateTimeField(default=timezone.now)
+    fin_programado = models.DateTimeField()
+    fin_real = models.DateTimeField(null=True, blank=True)
+    desactivado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="aperturas_formulario_desactivadas",
+    )
+
+    class Meta:
+        ordering = ["-inicio"]
+
+    @property
+    def activa(self):
+        return self.fin_real is None and timezone.now() < self.fin_programado
+
+    @classmethod
+    def actual(cls):
+        return (
+            cls.objects.filter(fin_real__isnull=True, fin_programado__gt=timezone.now())
+            .select_related("activado_por")
+            .first()
+        )
+
+
+class RespaldoLimpieza(models.Model):
+    bucket = models.CharField(max_length=120)
+    ruta_storage = models.CharField(max_length=500, unique=True)
+    nombre_archivo = models.CharField(max_length=255)
+    desde = models.DateField()
+    hasta = models.DateField()
+    total_atenciones = models.PositiveIntegerField(default=0)
+    tamano_bytes = models.PositiveBigIntegerField(default=0)
+    checksum_sha256 = models.CharField(max_length=64)
+    generado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="respaldos_limpieza",
+    )
+    generado = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-generado"]
+
+    def __str__(self):
+        return self.nombre_archivo

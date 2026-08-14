@@ -3,12 +3,9 @@
   <div>
     <span class="eyebrow">Atención #{{ atencion.pk }}</span>
     <h1>{{ atencion.empresa.nombre }}</h1>
-    <p>
-      {{ atencion.empresa.numero_documento }} · {{ atencion.fecha|date:'d \d\e F \d\e Y' }}
-    </p>
   </div>
   <div class="button-row">
-    <a class="btn btn-dark" href="{% url 'rating:evaluar_visita' atencion.pk %}">Evaluar visita</a>
+    <a class="btn btn-dark" href="{% url 'rating:evaluar' atencion.empresa_id %}">Evaluar empresa</a>
     <a
       class="btn btn-ghost"
       href="{% url 'atencion:atencion_editar' atencion.pk %}"
@@ -24,6 +21,7 @@
   <article class="detail-card">
     <h2>Consulta</h2>
     <p>{{ atencion.tema_consulta|default:'Sin tema registrado' }}</p>
+    {% if atencion.detalle_consulta %}<p class="muted"><strong>Detalle:</strong> {{ atencion.detalle_consulta }}</p>{% endif %}
     <dl>
       <dt>Canal</dt>
       <dd>{{ atencion.tipo_atencion }}</dd>

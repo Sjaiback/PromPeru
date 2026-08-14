@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.db import models
+from django.utils import timezone
 from atencion.models import Empresa
 from atencion.models import Atencion
 
@@ -44,7 +45,11 @@ class EvaluacionVisita(models.Model):
     """Fotografía de la evaluación realizada para una atención concreta."""
 
     atencion = models.ForeignKey(
-        Atencion, on_delete=models.CASCADE, related_name="evaluaciones"
+        Atencion,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="evaluaciones",
     )
     empresa = models.ForeignKey(
         Empresa, on_delete=models.PROTECT, related_name="evaluaciones_visita"
@@ -55,6 +60,8 @@ class EvaluacionVisita(models.Model):
     respuestas = models.JSONField(default=dict, blank=True)
     puntajes_seccion = models.JSONField(default=dict, blank=True)
     puntaje_total = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    fecha_evaluacion = models.DateField(default=timezone.localdate)
+    anio_evaluacion = models.PositiveSmallIntegerField(default=2026)
     creado = models.DateTimeField(auto_now_add=True)
     actualizado = models.DateTimeField(auto_now=True)
 

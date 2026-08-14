@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Respaldos privados · PROMPERÚ{% endblock %}
+{% block content %}
+<header class="page-head"><div><h1>Respaldos privados</h1></div></header>
+
+<section class="form-card backup-intro">
+  <h2>Copias automáticas antes de cada limpieza</h2>
+  <p>Estos archivos están en un bucket privado de Supabase Storage. Solo la cuenta de Sistemas puede verlos y descargarlos.</p>
+</section>
+
+<div class="table-wrap">
+  <table>
+    <thead><tr><th>Periodo respaldado</th><th>Atenciones</th><th>Tamaño</th><th>Generado</th><th>Responsable</th><th></th></tr></thead>
+    <tbody>
+      {% for item in respaldos %}
+        <tr>
+          <td>{{ item.desde|date:'d/m/Y' }} — {{ item.hasta|date:'d/m/Y' }}</td>
+          <td>{{ item.total_atenciones }}</td>
+          <td>{{ item.tamano_bytes|filesizeformat }}</td>
+          <td>{{ item.generado|date:'d/m/Y H:i' }}</td>
+          <td>{{ item.generado_por.get_full_name|default:item.generado_por.username|default:'Usuario eliminado' }}</td>
+          <td><a class="btn btn-small btn-dark" href="{% url 'rating:descargar_respaldo' item.pk %}">Descargar</a></td>
+        </tr>
+      {% empty %}<tr><td colspan="6" class="empty">Aún no se realizó ninguna limpieza respaldada.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

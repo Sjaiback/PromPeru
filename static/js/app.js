@@ -30,16 +30,19 @@
     if (!form) return;
     var tipo = form.querySelector("#id_tipo_documento"),
       numero = form.querySelector("#id_numero_documento"),
+      estudiante = form.querySelector("#id_es_estudiante"),
       actualizar = form.querySelector("#id_actualizar_datos"),
       hint = form.querySelector("[data-document-hint]"),
       lookupBtn = form.querySelector("[data-lookup]"),
       required = form.querySelector("[data-required-step]"),
       company = form.querySelector("[data-company-step]"),
       toggle = form.querySelector("[data-update-toggle]"),
+      studentToggle = form.querySelector("[data-student-toggle]"),
       submit = form.querySelector("[data-submit-row]"),
       mode = form.querySelector("[data-company-mode]");
     numero.addEventListener("input", function () {
-      this.value = this.value.replace(/\D/g, "");
+      if (tipo.value !== "Pasaporte") this.value = this.value.replace(/\D/g, "");
+      else this.value = this.value.replace(/[^a-z0-9-]/gi, "").toUpperCase();
     });
     function show(el, visible) {
       if (el) el.hidden = !visible;
@@ -61,10 +64,48 @@
         if (el && data[k] !== undefined) el.value = data[k];
       });
     }
+    function chooseByText(select, text) {
+      if (!select) return;
+      Array.prototype.some.call(select.options, function (option) {
+        if (option.text.trim().toLowerCase() === text.toLowerCase()) {
+          select.value = option.value;
+          return true;
+        }
+        return false;
+      });
+    }
+    function applyStudentMode() {
+      var active = !!(estudiante && estudiante.checked && tipo.value === "DNI");
+      ["sector", "oferta_producto_servicio", "tipo_personeria", "tipo_usuario", "cargo", "tipo_atencion", "tema_consulta"].forEach(function (name) {
+        var wrapper = form.querySelector('[data-field="' + name + '"]');
+        if (wrapper) wrapper.hidden = active;
+      });
+      var university = form.querySelector('[data-field="nombre"] > span');
+      if (university) university.textContent = active ? "UNIVERSIDAD O INSTITUCIÓN" : "NOMBRE DE LA EMPRESA / INSTITUCIÓN / PERSONA NATURAL";
+      if (!active) return;
+      show(required, true);
+      show(company, true);
+      show(submit, true);
+      var tipoAtencion = form.querySelector("#id_tipo_atencion"),
+        sector = form.querySelector("#id_sector"),
+        oferta = form.querySelector("#id_oferta_producto_servicio"),
+        personeria = form.querySelector("#id_tipo_personeria"),
+        usuario = form.querySelector("#id_tipo_usuario"),
+        cargo = form.querySelector("#id_cargo"),
+        tema = form.querySelector("#id_tema_consulta");
+      if (tipoAtencion) tipoAtencion.value = "Presencial";
+      chooseByText(sector, "Otros");
+      if (oferta) oferta.value = "Otros";
+      if (personeria) personeria.value = "Persona Natural";
+      if (usuario) usuario.value = "Estudiante";
+      if (cargo) cargo.value = "Estudiante";
+      if (tema) tema.value = "Otros";
+      if (mode) mode.textContent = "Datos del estudiante y su institución.";
+    }
     function perform(includeData) {
       var doc = numero.value.trim();
       if (!doc) {
-        hint.textContent = "Escribe tu DNI, RUC o CE para continuar.";
+        hint.textContent = "Escribe tu número de documento para continuar.";
         hint.classList.remove("found");
         return;
       }
@@ -103,6 +144,7 @@
             show(company, true);
             mode.textContent = "Completa tu registro por primera vez.";
           }
+          applyStudentMode();
         })
         .catch(function () {
           hint.textContent =
@@ -126,7 +168,11 @@
       show(company, false);
       show(submit, false);
       show(toggle, false);
+      show(studentToggle, tipo.value === "DNI");
+      if (tipo.value !== "DNI" && estudiante) estudiante.checked = false;
+      applyStudentMode();
     });
+    if (estudiante) estudiante.addEventListener("change", applyStudentMode);
     actualizar.addEventListener("change", function () {
       if (actualizar.checked) perform(true);
       else show(company, false);
@@ -137,6 +183,7 @@
       show(company, false);
       show(submit, false);
       show(toggle, false);
+      show(studentToggle, tipo.value === "DNI");
       hint.textContent = "Usaremos el documento únicamente para encontrar tu registro.";
       hint.classList.remove("found");
     }
@@ -178,7 +225,10 @@
         !!(company && company.querySelector(".field-error,.errorlist")),
       );
       show(toggle, true);
+      show(studentToggle, tipo.value === "DNI");
+      applyStudentMode();
     }
+    show(studentToggle, tipo.value === "DNI");
   }
   function initMessages() {
     setTimeout(function () {

@@ -18,6 +18,81 @@ from atencion.models import Atencion
 from atencion.models import ArchivoAtenciones
 from atencion.auditoria import registrar as auditar
 from seguimiento.models import GestionAtencion
+from rating.models import EvaluacionVisita
+
+
+EXCEL_ATENCIONES_COLUMNAS = [
+    "N°",
+    "FECHA",
+    "TIPO DE ATENCIÓN",
+    "RESPONSABLE",
+    "SECTOR",
+    "LÍNEA",
+    "PRODUCTO",
+    "REGIÓN",
+    "TIPO DE DOCUMENTO",
+    "N° DEL DOCUMENTO",
+    "EMPRESA / INSTITUCIÓN / PERSONA NATURAL",
+    "TIPO DE USUARIO",
+    "TIPO DE PERSONERÍA",
+    "NOMBRE Y APELLIDO",
+    "CARGO",
+    "TELEFONO/CELULAR",
+    "E-MAIL",
+    "TEMA DE CONSULTA",
+    "DETALLAR CONSULTA",
+    "ACCIÓN REALIZADA",
+    "ESTADO DE LA ATENCIÓN",
+    "SEGUIMIENTO",
+    "OBSERVACIONES",
+]
+
+
+def fila_excel_atencion(atencion):
+    empresa = atencion.empresa
+    gestion = getattr(atencion, "gestion", None)
+    fecha_hora = datetime.combine(atencion.fecha, atencion.hora)
+    return [
+        atencion.pk,
+        fecha_hora,
+        atencion.tipo_atencion,
+        atencion.responsable.nombre,
+        empresa.sector.nombre,
+        "",  # LÍNEA se reserva para una futura catalogación.
+        empresa.oferta_producto_servicio,
+        empresa.region.nombre,
+        empresa.tipo_documento,
+        empresa.numero_documento,
+        empresa.nombre,
+        empresa.tipo_usuario,
+        empresa.tipo_personeria,
+        empresa.nombres_apellidos,
+        empresa.cargo,
+        empresa.telefono,
+        empresa.email,
+        atencion.tema_consulta,
+        atencion.detalle_consulta,
+        gestion.accion_realizada if gestion else "",
+        gestion.get_estado_atencion_display() if gestion else "Sin atender",
+        gestion.get_estado_seguimiento_display() if gestion else "En proceso",
+        gestion.observaciones if gestion else "",
+    ]
+
+
+def ajustar_hoja_atenciones(ws, encabezado_fila=1):
+    ws.freeze_panes = f"A{encabezado_fila + 1}"
+    ws.auto_filter.ref = (
+        f"A{encabezado_fila}:W{max(ws.max_row, encabezado_fila)}"
+    )
+    for cell in ws[encabezado_fila]:
+        cell.font = cell.font.copy(bold=True)
+    for index, col in enumerate(ws.columns, start=1):
+        ws.column_dimensions[get_column_letter(index)].width = min(
+            max(len(str(c.value or "")) for c in col) + 2, 45
+        )
+    ws.column_dimensions["B"].width = 20
+    for cell in ws["B"][encabezado_fila:]:
+        cell.number_format = "dd/mm/yyyy hh:mm"
 
 
 def es_bi(user):
@@ -30,10 +105,23 @@ def puede_archivar(user):
     return user.is_superuser or bool(perfil and perfil.activo and perfil.puede_archivar)
 
 
+def puede_exportar(user):
+    perfil = getattr(user, "perfil_asesor", None)
+    return user.is_superuser or user.is_staff or bool(
+        perfil
+        and perfil.activo
+        and (
+            perfil.acceso_bi
+            or perfil.puede_archivar
+            or perfil.rol in {"admin", "coordinador"}
+        )
+    )
+
+
 def filtradas(request):
     qs = Atencion.objects.select_related(
-        "empresa__region", "empresa__sector", "responsable"
-    )
+        "empresa__region", "empresa__sector", "responsable", "gestion"
+    ).filter(anulada=False)
     desde, hasta = request.GET.get("desde"), request.GET.get("hasta")
     if desde:
         qs = qs.filter(fecha__gte=desde)
@@ -67,12 +155,22 @@ def dashboard(request):
     qs = filtradas(request)
     total = qs.count()
     gestiones = GestionAtencion.objects.filter(atencion__in=qs)
-    estados = list(
-        gestiones.values("estado__nombre", "estado__color")
+    estados_raw = list(
+        gestiones.values("estado_seguimiento")
         .annotate(total=Count("id"))
         .order_by("-total")
     )
-    cerradas = gestiones.filter(estado__es_cerrado=True, resuelta__isnull=False)
+    etiquetas_estado = dict(GestionAtencion.ESTADOS_SEGUIMIENTO)
+    colores_estado = {"en_proceso": "#d9a455", "finalizado": "#238a63"}
+    estados = [
+        {
+            "nombre": etiquetas_estado.get(item["estado_seguimiento"], "Sin estado"),
+            "color": colores_estado.get(item["estado_seguimiento"], "#d91023"),
+            "total": item["total"],
+        }
+        for item in estados_raw
+    ]
+    cerradas = gestiones.filter(estado_seguimiento="finalizado", resuelta__isnull=False)
     promedio = cerradas.annotate(
         duracion=ExpressionWrapper(
             F("resuelta") - F("iniciada"), output_field=DurationField()
@@ -96,15 +194,30 @@ def dashboard(request):
         .order_by("-empresa__rating__total")[:15]
     )
     hoy = timezone.localdate()
+    rating_regiones = list(
+        EvaluacionVisita.objects.filter(
+            empresa_id__in=qs.values("empresa_id"), anio_evaluacion=hoy.year
+        )
+        .values("empresa__region__nombre")
+        .annotate(promedio=Avg("puntaje_total"), evaluadas=Count("empresa_id", distinct=True))
+        .order_by("-promedio")[:12]
+    )
 
     def tendencia(periodo, truncar, inicio):
-        data = list(
-            qs.filter(fecha__gte=inicio)
-            .annotate(periodo=truncar("fecha"))
-            .values("periodo")
-            .annotate(total=Count("id"))
-            .order_by("periodo")
-        )
+        base = qs.filter(fecha__gte=inicio)
+        if periodo == "dia":
+            data = list(
+                base.values(periodo=F("fecha"))
+                .annotate(total=Count("id"))
+                .order_by("periodo")
+            )
+        else:
+            data = list(
+                base.annotate(periodo=truncar("fecha"))
+                .values("periodo")
+                .annotate(total=Count("id"))
+                .order_by("periodo")
+            )
         return {
             "labels": [item["periodo"].isoformat() for item in data],
             "values": [item["total"] for item in data],
@@ -130,9 +243,13 @@ def dashboard(request):
         "regiones": chart_values(series(qs, "empresa__region__nombre", "Región"), "label"),
         "sectores": chart_values(series(qs, "empresa__sector__nombre", "Sector"), "label"),
         "estados": {
-            "labels": [item["estado__nombre"] or "Sin estado" for item in estados],
+            "labels": [item["nombre"] for item in estados],
             "values": [item["total"] for item in estados],
-            "colors": [item["estado__color"] or "#d91023" for item in estados],
+            "colors": [item["color"] for item in estados],
+        },
+        "rating_regiones": {
+            "labels": [item["empresa__region__nombre"] or "Sin región" for item in rating_regiones],
+            "values": [round(float(item["promedio"]), 2) for item in rating_regiones],
         },
     }
     context = {
@@ -151,53 +268,22 @@ def dashboard(request):
         "sectores": Sector.objects.filter(activo=True),
         "filtros": request.GET,
         "chart_data": chart_data,
+        "rating_regiones": rating_regiones,
     }
     return render(request, "bi/dashboard.html", context)
 
 
 @login_required
-@user_passes_test(es_bi)
+@user_passes_test(puede_exportar)
 def exportar_excel(request):
+    qs = filtradas(request)
     wb = Workbook()
     ws = wb.active
     ws.title = "Atenciones"
-    ws.append(
-        [
-            "Fecha",
-            "Documento",
-            "Empresa",
-            "Canal",
-            "Responsable",
-            "Sector",
-            "Región",
-            "Tipo usuario",
-            "Consulta",
-            "Estado",
-            "Rating",
-        ]
-    )
-    for a in filtradas(request):
-        gestion = getattr(a, "gestion", None)
-        rating = getattr(a.empresa, "rating", None)
-        ws.append(
-            [
-                a.fecha,
-                a.empresa.numero_documento,
-                a.empresa.nombre,
-                a.tipo_atencion,
-                a.responsable.nombre,
-                a.empresa.sector.nombre,
-                a.empresa.region.nombre,
-                a.empresa.tipo_usuario,
-                a.tema_consulta,
-                gestion.estado.nombre if gestion else "",
-                float(rating.total) if rating else "",
-            ]
-        )
-    for index, col in enumerate(ws.columns, start=1):
-        ws.column_dimensions[get_column_letter(index)].width = min(
-            max(len(str(c.value or "")) for c in col) + 2, 45
-        )
+    ws.append(EXCEL_ATENCIONES_COLUMNAS)
+    for a in qs:
+        ws.append(fila_excel_atencion(a))
+    ajustar_hoja_atenciones(ws)
     out = BytesIO()
     wb.save(out)
     response = HttpResponse(
@@ -205,6 +291,16 @@ def exportar_excel(request):
         content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
     response["Content-Disposition"] = 'attachment; filename="reporte_atenciones.xlsx"'
+    if request.GET.get("respaldo") == "1" and not any(
+        request.GET.get(campo) for campo in ("desde", "hasta", "responsable", "sector")
+    ):
+        momento = timezone.now()
+        request.session["ultima_exportacion_limpieza"] = {
+            "hasta": momento.isoformat(),
+            "total": qs.filter(creado__lte=momento).count(),
+            "fecha": timezone.localtime(momento).strftime("%d/%m/%Y %H:%M"),
+        }
+        request.session.modified = True
     return response
 
 
@@ -239,72 +335,13 @@ def _workbook_atenciones(qs, titulo):
     ws = wb.active
     ws.title = "Atenciones"
     ws.append([titulo])
-    ws.merge_cells("A1:R1")
-    ws.append(
-        [
-            "ID",
-            "Fecha",
-            "Canal",
-            "Responsable",
-            "Documento",
-            "Empresa/persona",
-            "Contacto",
-            "Cargo",
-            "Teléfono",
-            "Email",
-            "Sector",
-            "Región",
-            "Tipo usuario",
-            "Producto/interés",
-            "Consulta",
-            "Estado",
-            "Seguimientos",
-            "Rating",
-        ]
-    )
+    ws.merge_cells("A1:W1")
+    ws.append(EXCEL_ATENCIONES_COLUMNAS)
     for a in qs.select_related(
         "empresa__sector", "empresa__region", "responsable"
     ).prefetch_related("gestion__seguimientos"):
-        gestion = getattr(a, "gestion", None)
-        rating = getattr(a.empresa, "rating", None)
-        logs = (
-            " | ".join(
-                f"{x.fecha_hora:%d/%m/%Y}: {x.detalle}"
-                for x in gestion.seguimientos.all()
-            )
-            if gestion
-            else ""
-        )
-        ws.append(
-            [
-                a.pk,
-                a.fecha,
-                a.tipo_atencion,
-                a.responsable.nombre,
-                a.empresa.numero_documento,
-                a.empresa.nombre,
-                a.empresa.nombres_apellidos,
-                a.empresa.cargo,
-                a.empresa.telefono,
-                a.empresa.email,
-                a.empresa.sector.nombre,
-                a.empresa.region.nombre,
-                a.empresa.tipo_usuario,
-                a.empresa.oferta_producto_servicio,
-                a.tema_consulta,
-                gestion.estado.nombre if gestion else "",
-                logs,
-                float(rating.total) if rating else "",
-            ]
-        )
-    for cell in ws[2]:
-        cell.font = cell.font.copy(bold=True)
-    ws.freeze_panes = "A3"
-    ws.auto_filter.ref = f"A2:R{max(ws.max_row, 2)}"
-    for index, col in enumerate(ws.columns, start=1):
-        ws.column_dimensions[get_column_letter(index)].width = min(
-            max(len(str(c.value or "")) for c in col) + 2, 45
-        )
+        ws.append(fila_excel_atencion(a))
+    ajustar_hoja_atenciones(ws, encabezado_fila=2)
     out = BytesIO()
     wb.save(out)
     return out.getvalue()

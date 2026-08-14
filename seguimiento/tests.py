@@ -60,3 +60,33 @@ class BandejaSeguimientoTests(TestCase):
         self.assertContains(response, "Las conversaciones que")
         self.assertContains(response, "Consulta propia")
         self.assertNotContains(response, "Consulta de otro asesor")
+
+    def test_seguimiento_guarda_campos_libres_y_estados_nuevos(self):
+        atencion = Atencion.objects.get(tema_consulta="Consulta propia")
+        self.client.force_login(self.usuario)
+        response = self.client.post(
+            reverse("seguimiento:gestionar", args=[atencion.pk]),
+            {
+                "gestion-detalle_consulta": "Necesita orientación especializada",
+                "gestion-accion_realizada": "Se entregó información y contactos",
+                "gestion-estado_atencion": "atendido_derivado",
+                "gestion-estado_seguimiento": "finalizado",
+                "gestion-observaciones": "",
+                "gestion-sin_observaciones": "on",
+                "log-detalle": "",
+            },
+        )
+        self.assertRedirects(response, reverse("seguimiento:bandeja"))
+        atencion.refresh_from_db()
+        gestion = atencion.gestion
+        self.assertEqual(atencion.detalle_consulta, "Necesita orientación especializada")
+        self.assertEqual(gestion.accion_realizada, "Se entregó información y contactos")
+        self.assertEqual(gestion.estado_atencion, "atendido_derivado")
+        self.assertEqual(gestion.estado_seguimiento, "finalizado")
+        self.assertIsNotNone(gestion.resuelta)
+
+        page = self.client.get(reverse("seguimiento:gestionar", args=[atencion.pk]))
+        self.assertNotContains(page, "Nueva entrada de seguimiento")
+        self.assertNotContains(page, "Describa la interacción o acuerdo")
+        self.assertContains(page, "Sin observaciones")
+        self.assertTrue(page.context["form"]["sin_observaciones"].value())

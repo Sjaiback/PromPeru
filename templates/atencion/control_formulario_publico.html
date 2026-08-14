@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Acceso temporal al formulario · PROMPERÚ{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div><h1>Acceso temporal al formulario</h1></div>
+</header>
+
+<section class="form-card public-access-card {% if apertura %}is-open{% endif %}">
+  <div class="public-access-status">
+    <span class="status-dot" aria-hidden="true"></span>
+    <div>
+      <small>Estado actual</small>
+      <h2>{% if apertura %}Formulario liberado{% else %}Acceso con usuario requerido{% endif %}</h2>
+      {% if apertura %}
+        <p>Se cerrará automáticamente el {{ apertura.fin_programado|date:'d/m/Y' }} a las {{ apertura.fin_programado|date:'H:i' }}.</p>
+        <strong class="public-countdown" data-expires="{{ apertura.fin_programado|date:'c' }}">Calculando tiempo restante…</strong>
+      {% else %}
+        <p>Los visitantes deben iniciar sesión con la cuenta de clientes.</p>
+      {% endif %}
+    </div>
+  </div>
+  <form method="post">
+    {% csrf_token %}
+    {% if apertura %}
+      <button class="btn btn-danger" name="accion" value="desactivar" type="submit">Desactivar ahora</button>
+    {% else %}
+      <button class="btn btn-primary" name="accion" value="activar" type="submit">Liberar durante 30 minutos</button>
+    {% endif %}
+  </form>
+</section>
+
+<section>
+  <div class="section-title"><h2>Historial de aperturas</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Inicio</th><th>Activó</th><th>Fin previsto</th><th>Resultado</th></tr></thead>
+      <tbody>
+        {% for item in historial %}
+          <tr>
+            <td>{{ item.inicio|date:'d/m/Y H:i' }}</td>
+            <td>{{ item.activado_por.get_full_name|default:item.activado_por.username|default:'Usuario eliminado' }}</td>
+            <td>{{ item.fin_programado|date:'d/m/Y H:i' }}</td>
+            <td>{% if item.fin_real %}Desactivado por {{ item.desactivado_por.get_full_name|default:item.desactivado_por.username|default:'sistema' }}{% elif item.activa %}Activo{% else %}Venció automáticamente{% endif %}</td>
+          </tr>
+        {% empty %}<tr><td colspan="4" class="empty">Todavía no se liberó el formulario.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+(() => {
+  const output = document.querySelector('[data-expires]');
+  if (!output) return;
+  const end = new Date(output.dataset.expires).getTime();
+  const update = () => {
+    const remaining = Math.max(0, end - Date.now());
+    const minutes = Math.floor(remaining / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    output.textContent = remaining ? `${minutes}:${String(seconds).padStart(2, '0')} restantes` : 'Acceso vencido';
+    if (!remaining) setTimeout(() => location.reload(), 800);
+  };
+  update();
+  setInterval(update, 1000);
+})();
+</script>
+{% endblock %}

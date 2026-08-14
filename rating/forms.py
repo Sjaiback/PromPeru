@@ -24,6 +24,23 @@ class ImportarExcelForm(forms.Form):
     )
 
 
+class ImportarDatosForm(forms.Form):
+    tipo_importacion = forms.ChoiceField(
+        label="¿Qué contiene el archivo?",
+        choices=[
+            ("clientes", "Solo clientes"),
+            ("atenciones", "Clientes y atenciones"),
+        ],
+        widget=forms.RadioSelect,
+    )
+    archivo = forms.FileField(
+        label="Archivo Excel (.xlsx)",
+        widget=forms.ClearableFileInput(
+            attrs={"accept": ".xlsx", "class": "form-control"}
+        ),
+    )
+
+
 class EvaluacionDinamicaForm(forms.Form):
     def __init__(self, *args, criterios=None, valores=None, **kwargs):
         super().__init__(*args, **kwargs)

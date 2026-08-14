@@ -18,3 +18,9 @@ services:
         value: "5432"
       - key: DB_CONN_MAX_AGE
         value: "60"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BACKUP_BUCKET
+        value: promperu-respaldos

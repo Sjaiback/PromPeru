@@ -20,6 +20,15 @@ class AccionRealizada(CatalogoBase):
 
 
 class GestionAtencion(models.Model):
+    ESTADOS_ATENCION = [
+        ("atendido", "Atendido"),
+        ("atendido_derivado", "Atendido y derivado"),
+        ("sin_atender", "Sin atender"),
+    ]
+    ESTADOS_SEGUIMIENTO = [
+        ("en_proceso", "En proceso"),
+        ("finalizado", "Finalizado"),
+    ]
     atencion = models.OneToOneField(
         Atencion, on_delete=models.CASCADE, related_name="gestion"
     )
@@ -27,10 +36,24 @@ class GestionAtencion(models.Model):
         AccionRealizada, null=True, blank=True, on_delete=models.SET_NULL
     )
     accion_otro = models.CharField(max_length=250, blank=True)
+    accion_realizada = models.TextField("ACCIÓN REALIZADA", blank=True)
     estado = models.ForeignKey(
         EstadoAtencion, on_delete=models.PROTECT, related_name="gestiones"
     )
     observaciones = models.TextField(blank=True)
+    estado_atencion = models.CharField(
+        "ESTADO DE LA ATENCIÓN",
+        max_length=24,
+        choices=ESTADOS_ATENCION,
+        default="sin_atender",
+    )
+    estado_seguimiento = models.CharField(
+        "SEGUIMIENTO",
+        max_length=20,
+        choices=ESTADOS_SEGUIMIENTO,
+        default="en_proceso",
+    )
+    es_practicante = models.BooleanField(default=False)
     iniciada = models.DateTimeField(default=timezone.now)
     resuelta = models.DateTimeField(null=True, blank=True)
     actualizado_por = models.ForeignKey(
@@ -38,9 +61,9 @@ class GestionAtencion(models.Model):
     )
 
     def save(self, *args, **kwargs):
-        if self.estado_id and self.estado.es_cerrado and not self.resuelta:
-            self.resuelta = timezone.now()
-        elif self.estado_id and not self.estado.es_cerrado:
+        if self.estado_seguimiento == "finalizado":
+            self.resuelta = self.resuelta or timezone.now()
+        elif self.estado_seguimiento == "en_proceso":
             self.resuelta = None
         super().save(*args, **kwargs)
 

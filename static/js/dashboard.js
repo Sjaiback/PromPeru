@@ -52,6 +52,7 @@
   bar("advisorChart", data.responsables, true, false);
   bar("regionChart", data.regiones, false, true);
   bar("sectorChart", data.sectores, true, false);
+  bar("ratingRegionChart", data.rating_regiones, false, true);
   window.addEventListener("promperu:theme", function () {
     Chart.defaults.color = chartMuted();
     charts.forEach(function (chart) {

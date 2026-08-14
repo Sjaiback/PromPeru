@@ -45,7 +45,7 @@
 
     <link
         rel="stylesheet"
-        href="{% static 'css/overrides.css' %}?v=20260806-1"
+        href="{% static 'css/overrides.css' %}?v=20260814-5"
     />
 
     <link
@@ -55,7 +55,7 @@
 
     <script
         defer
-        src="{% static 'js/app.js' %}?v=20260813-2"
+        src="{% static 'js/app.js' %}?v=20260814-2"
     ></script>
 
     <script
@@ -141,6 +141,13 @@
                     Mi perfil
                 </a>
 
+                {% if puede_controlar_formulario_publico %}
+                    <a href="{% url 'atencion:controlar_formulario_publico' %}">
+                        <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#square-plus"></use></svg>
+                        Liberar formulario
+                    </a>
+                {% endif %}
+
                 {% if user.is_superuser or user.perfil_asesor.acceso_bi %}
                     <a href="{% url 'bi:dashboard' %}">
                         <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#chart"></use></svg>
@@ -149,21 +156,23 @@
                 {% endif %}
 
                 {% if user.is_superuser or user.perfil_asesor.puede_archivar %}
-                    <a href="{% url 'bi:archivos' %}">
-                        <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#archive"></use></svg>
-                        Archivo mensual
-                    </a>
-
                     <a href="{% url 'atencion:auditoria' %}">
                         <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#shield-check"></use></svg>
                         Auditoría
                     </a>
                 {% endif %}
 
-                {% if user.is_staff %}
-                    <a href="{% url 'rating:importar' %}">
+                {% if user.is_staff or user.is_superuser or user.perfil_asesor.puede_archivar or user.perfil_asesor.rol == 'coordinador' %}
+                    <a href="{% url 'rating:intercambiar' %}">
                         <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#file-up"></use></svg>
-                        Importar rating
+                        Importar o exportar datos
+                    </a>
+                {% endif %}
+
+                {% if es_cuenta_sistemas %}
+                    <a href="{% url 'rating:respaldos' %}">
+                        <svg class="nav-icon" aria-hidden="true"><use href="{% static 'img/nav-icons.svg' %}#archive"></use></svg>
+                        Respaldos privados
                     </a>
                 {% endif %}
 
@@ -248,6 +257,8 @@
                     {% csrf_token %}
                     <button class="btn btn-dark" type="submit">Salir</button>
                 </form>
+            {% elif acceso_publico_temporal %}
+                <a class="btn btn-dark" href="{% url 'login' %}">Iniciar sesión</a>
             {% endif %}
 
         </header>

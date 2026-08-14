@@ -1,6 +1,7 @@
 from django.contrib import messages
-from django.contrib.auth.decorators import login_required
-from django.db.models import Min, Q
+from django.contrib.auth.decorators import login_required, user_passes_test
+from datetime import timedelta
+from django.db.models import Q
 from django.contrib.auth import update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.core.paginator import Paginator
@@ -9,6 +10,7 @@ from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_GET, require_POST
+from django.utils import timezone
 from seguimiento.models import EstadoAtencion, GestionAtencion
 from .auditoria import registrar as auditar, serializar
 from .forms import (
@@ -19,9 +21,9 @@ from .forms import (
     UsuarioInternoForm,
     MiPerfilForm,
 )
-from .models import Atencion, Empresa, PerfilAsesor
+from .models import Atencion, AperturaFormularioPublico, Empresa, PerfilAsesor
 from .middleware import es_cliente
-from .permisos import puede_gestionar_usuarios
+from .permisos import puede_controlar_formulario_publico, puede_gestionar_usuarios
 
 
 def error_403(request, exception=None):
@@ -104,13 +106,16 @@ def form_registro(request, publico=False, confirmacion_responsable=None):
             "publico": publico,
             "asesor": asesor,
             "confirmacion_responsable": confirmacion_responsable,
+            "acceso_publico_temporal": publico and not request.user.is_authenticated,
         },
     )
 
 
-@login_required
 def registro_publico(request):
-    if not es_cliente(request.user):
+    apertura = AperturaFormularioPublico.actual()
+    if not request.user.is_authenticated and not apertura:
+        return redirect(f"/cuentas/ingresar/?next={request.path}")
+    if request.user.is_authenticated and not es_cliente(request.user):
         return redirect("atencion:inicio")
     confirmacion_responsable = None
     if request.method == "GET":
@@ -145,29 +150,21 @@ def inicio(request):
         and request.session.pop("mostrar_resumen_entrada", False)
     ):
         pendientes = qs.filter(
-            Q(gestion__isnull=True) | Q(gestion__estado__es_cerrado=False)
+            Q(gestion__isnull=True) | Q(gestion__estado_seguimiento="en_proceso")
         ).distinct()
-        # La ficha permanente se reutiliza en visitas futuras: solo alertamos
-        # empresas que todavía no tienen ninguna evaluación guardada.
-        sin_evaluacion = qs.filter(
-            empresa__evaluaciones_visita__isnull=True
-        ).distinct()
-        empresas_prioritarias = list(
-            sin_evaluacion.values("empresa_id")
-            .annotate(primera_fecha=Min("fecha"))
-            .order_by("primera_fecha")[:3]
-        )
-        evaluaciones = [
-            sin_evaluacion.filter(empresa_id=item["empresa_id"])
-            .order_by("fecha", "creado")
-            .first()
-            for item in empresas_prioritarias
-        ]
+        empresas_base = Empresa.objects.filter(activa=True)
+        if perfil.rol == "asesor" and perfil.responsable_id:
+            empresas_base = empresas_base.filter(
+                atenciones__responsable=perfil.responsable
+            ).distinct()
+        anio_actual = timezone.localdate().year
+        sin_evaluacion = empresas_base.exclude(
+            evaluaciones_visita__anio_evaluacion=anio_actual
+        ).distinct().order_by("creado", "nombre")
+        evaluaciones = list(sin_evaluacion[:3])
         resumen_entrada = {
             "pendientes": pendientes.count(),
-            "empresas_sin_evaluar": sin_evaluacion.values("empresa_id")
-            .distinct()
-            .count(),
+            "empresas_sin_evaluar": sin_evaluacion.count(),
             "evaluaciones": evaluaciones,
         }
     return render(
@@ -197,9 +194,16 @@ def detalle(request, pk):
     return render(request, "atencion/detalle.html", {"atencion": obj})
 
 
-@login_required
 @require_GET
 def buscar_documento(request):
+    if not request.user.is_authenticated and not AperturaFormularioPublico.actual():
+        return JsonResponse(
+            {
+                "encontrado": False,
+                "error": "El formulario público no está habilitado.",
+            },
+            status=403,
+        )
     empresa = Empresa.objects.filter(
         tipo_documento=request.GET.get("tipo"),
         numero_documento=request.GET.get("numero", "").strip(),
@@ -227,10 +231,63 @@ def buscar_documento(request):
 
 
 @login_required
+@user_passes_test(puede_controlar_formulario_publico)
+def controlar_formulario_publico(request):
+    ahora = timezone.now()
+    actual = AperturaFormularioPublico.actual()
+    if request.method == "POST":
+        accion = request.POST.get("accion")
+        if accion == "activar":
+            AperturaFormularioPublico.objects.filter(fin_real__isnull=True).update(
+                fin_real=ahora,
+                desactivado_por=request.user,
+            )
+            actual = AperturaFormularioPublico.objects.create(
+                activado_por=request.user,
+                inicio=ahora,
+                fin_programado=ahora + timedelta(minutes=30),
+            )
+            auditar(
+                request,
+                "editar",
+                actual,
+                descripcion="Formulario público liberado temporalmente por 30 minutos",
+                despues={"fin_programado": actual.fin_programado.isoformat()},
+            )
+            messages.success(request, "Formulario liberado por 30 minutos.")
+        elif accion == "desactivar" and actual:
+            actual.fin_real = ahora
+            actual.desactivado_por = request.user
+            actual.save(update_fields=["fin_real", "desactivado_por"])
+            auditar(
+                request,
+                "editar",
+                actual,
+                descripcion="Acceso público al formulario desactivado manualmente",
+                despues={"fin_real": ahora.isoformat()},
+            )
+            messages.success(request, "Acceso público desactivado.")
+        return redirect("atencion:controlar_formulario_publico")
+
+    return render(
+        request,
+        "atencion/control_formulario_publico.html",
+        {
+            "apertura": actual,
+            "historial": AperturaFormularioPublico.objects.select_related(
+                "activado_por", "desactivado_por"
+            )[:20],
+        },
+    )
+
+
+@login_required
 def empresas(request):
     if not request.user.is_superuser and not perfil_activo(request.user):
         return render(request, "atencion/sin_acceso.html", status=403)
-    qs = Empresa.objects.select_related("sector", "region").order_by("nombre")
+    qs = Empresa.objects.select_related("sector", "region", "rating").prefetch_related(
+        "evaluaciones_visita"
+    ).order_by("nombre")
     q = request.GET.get("q", "").strip()
     if q:
         qs = qs.filter(

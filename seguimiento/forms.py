@@ -3,21 +3,45 @@ from .models import GestionAtencion, SeguimientoLog
 
 
 class GestionForm(forms.ModelForm):
+    detalle_consulta = forms.CharField(
+        label="DETALLAR CONSULTA",
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 4}),
+    )
+    sin_observaciones = forms.BooleanField(
+        label="Sin observaciones", required=False
+    )
+
     class Meta:
         model = GestionAtencion
-        fields = ["accion", "accion_otro", "estado", "observaciones"]
-        widgets = {"observaciones": forms.Textarea(attrs={"rows": 3})}
+        fields = [
+            "es_practicante",
+            "accion_realizada",
+            "estado_atencion",
+            "estado_seguimiento",
+            "observaciones",
+        ]
+        labels = {"es_practicante": "Es practicante"}
+        widgets = {
+            "accion_realizada": forms.Textarea(attrs={"rows": 4}),
+            "observaciones": forms.Textarea(attrs={"rows": 3}),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["accion"].queryset = self.fields["accion"].queryset.filter(
-            activo=True
-        )
-        self.fields["estado"].queryset = self.fields["estado"].queryset.filter(
-            activo=True
-        )
+        if self.instance and self.instance.atencion_id:
+            self.fields["detalle_consulta"].initial = self.instance.atencion.detalle_consulta
+            self.fields["sin_observaciones"].initial = not bool(
+                (self.instance.observaciones or "").strip()
+            )
         for f in self.fields.values():
             f.widget.attrs["class"] = "form-control"
+
+    def clean(self):
+        data = super().clean()
+        if data.get("sin_observaciones"):
+            data["observaciones"] = ""
+        return data
 
 
 class SeguimientoForm(forms.ModelForm):
@@ -33,3 +57,7 @@ class SeguimientoForm(forms.ModelForm):
                 }
             )
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["detalle"].required = False

@@ -6,7 +6,6 @@
   <div>
     <span class="eyebrow">Centro de decisión</span>
     <h1>Dashboards</h1>
-    <p>Una lectura visual de la atención comercial, sus resultados y oportunidades.</p>
   </div>
   <div class="button-row">
     <a class="btn btn-ghost" href="{% url 'bi:excel' %}?{{ request.GET.urlencode }}">Excel</a>
@@ -47,6 +46,7 @@
   <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Equipo</span><h2>Carga por responsable</h2></div></div><div class="canvas-wrap"><canvas id="advisorChart" aria-label="Carga por responsable" role="img"></canvas></div></article>
   <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Territorio</span><h2>Atenciones por región</h2></div></div><div class="canvas-wrap"><canvas id="regionChart" aria-label="Atenciones por región" role="img"></canvas></div></article>
   <article class="visual-card"><div class="visual-heading"><div><span class="eyebrow">Oferta</span><h2>Sectores económicos</h2></div></div><div class="canvas-wrap"><canvas id="sectorChart" aria-label="Sectores económicos" role="img"></canvas></div></article>
+  <article class="visual-card rating-region-card"><div class="visual-heading"><div><span class="eyebrow">Evaluación {% now 'Y' %}</span><h2>Puntaje promedio por región</h2></div></div><div class="canvas-wrap"><canvas id="ratingRegionChart" aria-label="Puntaje promedio de evaluación por región" role="img"></canvas></div></article>
 </section>
 
 <section class="split-tables dashboard-tables">
@@ -58,5 +58,5 @@
 {% endblock %}
 {% block extra_scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
-<script src="{% static 'js/dashboard.js' %}?v=20260813-6"></script>
+<script src="{% static 'js/dashboard.js' %}?v=20260814-1"></script>
 {% endblock %}

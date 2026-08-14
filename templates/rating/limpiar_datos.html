@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Limpiar base de datos · PROMPERÚ{% endblock %}
+{% block content %}
+<section class="confirm-shell cleanup-confirmation">
+  <span class="eyebrow">Limpieza protegida</span>
+  <h1>Limpiar atenciones exportadas</h1>
+  <p>
+    Esta operación elimina únicamente las atenciones incluidas en la última exportación global.
+    Se conservarán las empresas, contactos, evaluaciones, asesores y cuentas de acceso.
+    Antes de eliminar, el sistema guardará automáticamente otro Excel en el almacenamiento privado de Supabase.
+  </p>
+
+  {% if respaldo %}
+  <div class="cleanup-export-status">
+    <span aria-hidden="true">✓</span>
+    <div>
+      <strong>Exportación detectada</strong>
+      <p>{{ respaldo.total }} atenciones exportadas el {{ respaldo.fecha }}.</p>
+    </div>
+  </div>
+  {% else %}
+  <div class="cleanup-export-status cleanup-export-status--warning">
+    <span aria-hidden="true">!</span>
+    <div>
+      <strong>Primero exporta los datos</strong>
+      <p>Regresa al módulo, pulsa “Exportar Excel” y guarda el archivo antes de continuar.</p>
+    </div>
+  </div>
+  {% endif %}
+
+  <form method="post" class="stack cleanup-form">
+    {% csrf_token %}
+    <label class="cleanup-check">
+      <input type="checkbox" name="datos_exportados" value="1" {% if not respaldo %}disabled{% endif %}>
+      <span><strong>Ya exporté los datos</strong><small>Confirmo que descargué y guardé el Excel de respaldo.</small></span>
+    </label>
+    <label>
+      <span>Escribe <strong>LIMPIAR</strong> para confirmar</span>
+      <input class="form-control" name="confirmacion" autocomplete="off" {% if not respaldo %}disabled{% endif %}>
+    </label>
+    <div class="form-actions">
+      <a class="btn btn-ghost" href="{% url 'rating:intercambiar' %}">Cancelar</a>
+      <button class="btn btn-danger" type="submit" {% if not respaldo %}disabled{% endif %}>Eliminar datos exportados</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

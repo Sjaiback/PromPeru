@@ -1,7 +1,11 @@
 import tempfile, zipfile
+from io import BytesIO
+from unittest import mock
 from django.contrib.auth import get_user_model
+from django.conf import settings
 from django.test import TestCase, override_settings
 from django.urls import reverse
+from openpyxl import load_workbook
 from atencion.models import (
     ArchivoAtenciones,
     Atencion,
@@ -9,6 +13,7 @@ from atencion.models import (
     PerfilAsesor,
     Region,
     Responsable,
+    RespaldoLimpieza,
     Sector,
 )
 
@@ -83,3 +88,84 @@ class ArchivoMensualTests(TestCase):
             set(response.context["chart_data"]["tendencias"]),
             {"dia", "semana", "mes"},
         )
+
+    def test_respaldos_privados_solo_sistemas(self):
+        url = reverse("rating:respaldos")
+        self.assertEqual(self.client.get(url).status_code, 403)
+        sistemas = get_user_model().objects.create_superuser(
+            settings.SYSTEM_ADMIN_USERNAME,
+            "sistemas@example.test",
+            "clave-segura-2026",
+        )
+        self.client.force_login(sistemas)
+        self.assertEqual(self.client.get(url).status_code, 200)
+
+    def test_excel_respeta_las_23_columnas_y_el_orden_oficial(self):
+        response = self.client.get(reverse("bi:excel"))
+        self.assertEqual(response.status_code, 200)
+        workbook = load_workbook(BytesIO(response.content), data_only=True)
+        headers = [cell.value for cell in workbook.active[1]]
+        self.assertEqual(
+            headers,
+            [
+                "N°", "FECHA", "TIPO DE ATENCIÓN", "RESPONSABLE", "SECTOR",
+                "LÍNEA", "PRODUCTO", "REGIÓN", "TIPO DE DOCUMENTO",
+                "N° DEL DOCUMENTO", "EMPRESA / INSTITUCIÓN / PERSONA NATURAL",
+                "TIPO DE USUARIO", "TIPO DE PERSONERÍA", "NOMBRE Y APELLIDO",
+                "CARGO", "TELEFONO/CELULAR", "E-MAIL", "TEMA DE CONSULTA",
+                "DETALLAR CONSULTA", "ACCIÓN REALIZADA", "ESTADO DE LA ATENCIÓN",
+                "SEGUIMIENTO", "OBSERVACIONES",
+            ],
+        )
+        self.assertEqual(workbook.active["F2"].value, None)
+
+    @mock.patch("rating.views.subir_respaldo")
+    def test_limpieza_exige_exportacion_checkbox_y_confirmacion(self, subir):
+        subir.return_value = {
+            "bucket": "promperu-respaldos",
+            "ruta": "limpiezas/prueba.xlsx",
+            "tamano": 2048,
+            "checksum": "a" * 64,
+        }
+        limpiar_url = reverse("rating:limpiar_datos")
+        response = self.client.get(limpiar_url)
+        self.assertContains(response, "Primero exporta los datos")
+
+        self.client.post(
+            limpiar_url,
+            {"datos_exportados": "1", "confirmacion": "LIMPIAR"},
+        )
+        self.assertEqual(Atencion.objects.count(), 1)
+
+        export = self.client.get(reverse("bi:excel") + "?respaldo=1")
+        self.assertEqual(export.status_code, 200)
+        self.assertIn("ultima_exportacion_limpieza", self.client.session)
+
+        nueva = Atencion.objects.create(
+            tipo_atencion="Presencial",
+            responsable=self.user.perfil_asesor.responsable,
+            empresa=self.empresa,
+            registrado_por=self.user,
+            origen="asesor",
+        )
+        response = self.client.post(
+            limpiar_url,
+            {"datos_exportados": "1", "confirmacion": "LIMPIAR"},
+        )
+        self.assertRedirects(response, reverse("rating:intercambiar"))
+        self.assertEqual(Atencion.objects.count(), 1)
+        self.assertTrue(Atencion.objects.filter(pk=nueva.pk).exists())
+        self.assertTrue(Empresa.objects.filter(pk=self.empresa.pk).exists())
+        self.assertEqual(RespaldoLimpieza.objects.count(), 1)
+        self.assertEqual(RespaldoLimpieza.objects.get().total_atenciones, 1)
+
+    @mock.patch("rating.views.subir_respaldo", side_effect=RuntimeError("sin storage"))
+    def test_limpieza_se_cancela_si_falla_el_respaldo_privado(self, subir):
+        self.client.get(reverse("bi:excel") + "?respaldo=1")
+        response = self.client.post(
+            reverse("rating:limpiar_datos"),
+            {"datos_exportados": "1", "confirmacion": "LIMPIAR"},
+        )
+        self.assertRedirects(response, reverse("rating:limpiar_datos"))
+        self.assertEqual(Atencion.objects.count(), 1)
+        self.assertEqual(RespaldoLimpieza.objects.count(), 0)

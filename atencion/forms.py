@@ -2,7 +2,15 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.utils import timezone
-from .models import Atencion, Empresa, PerfilAsesor, Region, Responsable, Sector
+from .models import (
+    Atencion,
+    Empresa,
+    PerfilAsesor,
+    Region,
+    Responsable,
+    Sector,
+    TIPOS_DOCUMENTO,
+)
 
 DETALLE_EMPRESA = [
     "sector",
@@ -30,12 +38,15 @@ def opciones_catalogo(clave, queryset):
 class AtencionRegistroForm(forms.Form):
     tipo_documento = forms.ChoiceField(
         label="Tipo de documento",
-        choices=[("DNI", "DNI"), ("RUC", "RUC"), ("CE", "CE")],
+        choices=TIPOS_DOCUMENTO,
     )
     numero_documento = forms.CharField(
-        label="DNI, RUC o CE",
-        max_length=11,
-        widget=forms.TextInput(attrs={"inputmode": "numeric", "pattern": "[0-9]*"}),
+        label="Número de documento",
+        max_length=30,
+        widget=forms.TextInput(attrs={"autocomplete": "off"}),
+    )
+    es_estudiante = forms.BooleanField(
+        label="¿Eres estudiante?", required=False
     )
     actualizar_datos = forms.BooleanField(label="Actualizar mis datos", required=False)
     tipo_atencion = forms.ChoiceField(
@@ -54,7 +65,7 @@ class AtencionRegistroForm(forms.Form):
         empty_label="Seleccionar una opción",
     )
     oferta_producto_servicio = forms.CharField(
-        label="OFERTA O PRODUCTO O SERVICIO CON EL QUE CUENTA O DE INTERÉS",
+        label="OFERTA, PRODUCTO O SERVICIO QUE OFRECE",
         widget=forms.Textarea(attrs={"rows": 2}),
         required=False,
     )
@@ -130,14 +141,34 @@ class AtencionRegistroForm(forms.Form):
             self.add_error(
                 "numero_documento", "El DNI debe tener exactamente 8 dígitos."
             )
-        if tipo == "CE" and not doc.isdigit():
-            self.add_error("numero_documento", "El CE debe contener solo dígitos.")
+        if tipo == "Carné de Extranjería" and not doc:
+            self.add_error("numero_documento", "Ingresa el número del carné.")
+        if tipo == "Pasaporte" and not doc:
+            self.add_error("numero_documento", "Ingresa el número de pasaporte.")
+        estudiante = bool(data.get("es_estudiante") and tipo == "DNI")
+        if estudiante:
+            sector, _ = Sector.objects.get_or_create(
+                nombre__iexact="Otros", defaults={"nombre": "Otros", "orden": 999}
+            )
+            data.update(
+                {
+                    "tipo_atencion": "Presencial",
+                    "sector": sector,
+                    "oferta_producto_servicio": "Otros",
+                    "tipo_usuario": "Estudiante",
+                    "tipo_personeria": "Persona Natural",
+                    "cargo": "Estudiante",
+                    "tema_consulta": "Otros",
+                }
+            )
         self.empresa_existente = (
             Empresa.objects.filter(tipo_documento=tipo, numero_documento=doc).first()
             if doc
             else None
         )
-        requiere_detalle = not self.empresa_existente or data.get("actualizar_datos")
+        requiere_detalle = (
+            not self.empresa_existente or data.get("actualizar_datos") or estudiante
+        )
         if requiere_detalle:
             for name in [
                 "sector",
@@ -214,9 +245,16 @@ class EmpresaForm(forms.ModelForm):
 class AtencionEdicionForm(forms.ModelForm):
     class Meta:
         model = Atencion
-        fields = ["fecha", "tipo_atencion", "responsable", "tema_consulta"]
+        fields = [
+            "fecha",
+            "hora",
+            "tipo_atencion",
+            "responsable",
+            "tema_consulta",
+        ]
         widgets = {
             "fecha": forms.DateInput(attrs={"type": "date"}),
+            "hora": forms.TimeInput(attrs={"type": "time"}),
             "tema_consulta": forms.Textarea(attrs={"rows": 4}),
         }
 

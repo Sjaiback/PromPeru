@@ -3,7 +3,6 @@
   <div>
     <span class="eyebrow">Base permanente</span>
     <h1>Empresas y contactos</h1>
-    <p>Estos registros no se eliminan durante la depuración mensual.</p>
   </div>
   <a class="btn btn-primary" href="{% url 'atencion:registrar' %}"
     >+ Nueva atención</a
@@ -27,6 +26,8 @@
         <th>Contacto</th>
         <th>Sector</th>
         <th>Región</th>
+        <th>Última evaluación</th>
+        <th>Puntaje</th>
         <th>Estado</th>
         <th></th>
       </tr>
@@ -39,6 +40,9 @@
         <td>{{ e.nombres_apellidos|default:'—' }}</td>
         <td>{{ e.sector }}</td>
         <td>{{ e.region }}</td>
+        {% with ultima=e.evaluaciones_visita.first %}
+        <td>{% if ultima %}{{ ultima.fecha_evaluacion|date:'d/m/Y' }}{% else %}<span class="muted">Pendiente</span>{% endif %}</td>
+        <td>{% if ultima %}<strong>{{ ultima.puntaje_total }}</strong>{% else %}—{% endif %}</td>
         <td>
           <span class="pill"
             >{% if e.activa %}Activa{% else %}Desactivada{% endif %}</span
@@ -47,13 +51,14 @@
         <td>
           <div class="row-actions">
             <a href="{% url 'atencion:empresa_editar' e.pk %}">Editar</a
-            ><a href="{% url 'rating:evaluar' e.pk %}">Evaluar</a>
+            ><a href="{% url 'rating:evaluar' e.pk %}">{% if ultima %}Volver a evaluar{% else %}Evaluar{% endif %}</a>
           </div>
         </td>
+        {% endwith %}
       </tr>
       {% empty %}
       <tr>
-        <td colspan="7" class="empty">No se encontraron registros.</td>
+        <td colspan="9" class="empty">No se encontraron registros.</td>
       </tr>
       {% endfor %}
     </tbody>

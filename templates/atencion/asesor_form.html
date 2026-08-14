@@ -1,5 +1,5 @@
 {% extends 'base.html' %}{% block title %}Editar asesor · PROMPERÚ{% endblock %}{% block content %}
-<header class="page-head compact"><div><span class="eyebrow">Gestión de asesores</span><h1>{{ perfil.responsable.nombre }}</h1><p>Usuario: {{ perfil.usuario.username }} · Rol: {{ perfil.get_rol_display }}</p></div></header>
+<header class="page-head compact"><div><span class="eyebrow">Gestión de asesores</span><h1>{{ perfil.responsable.nombre }}</h1></div></header>
 <form method="post" class="form-card" novalidate>{% csrf_token %}
   <fieldset><legend><span>01</span> Cuenta de acceso</legend><div class="form-grid">{% for field in form %}<label><span>{{ field.label }}</span>{{ field }}{% if field.errors %}<small class="field-error">{{ field.errors|striptags }}</small>{% endif %}</label>{% endfor %}</div></fieldset>
   <div class="form-actions"><a class="btn btn-ghost" href="{% url 'atencion:asesores' %}">Cancelar</a><button class="btn btn-primary" type="submit">Guardar cambios</button></div>

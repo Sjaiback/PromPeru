@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% block title %}Importar o exportar datos · PROMPERÚ{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <span class="eyebrow">Administración de datos</span>
+    <h1>Importar o exportar datos</h1>
+  </div>
+  <div class="button-row">
+    <a class="btn btn-primary" href="{% url 'bi:excel' %}?respaldo=1">Exportar Excel <span>↓</span></a>
+    <a class="btn btn-danger" href="{% url 'rating:limpiar_datos' %}">Limpiar BDD</a>
+  </div>
+</header>
+
+<div class="work-grid data-exchange-grid">
+  <section class="upload-card">
+    <div class="upload-icon">XLSX</div>
+    <div>
+      <h2>Importar información</h2>
+      <p class="muted">Selecciona si el archivo contiene únicamente clientes o también el historial completo de consultas.</p>
+      <form method="post" enctype="multipart/form-data" class="stack">
+        {% csrf_token %}
+        {{ form.non_field_errors }}
+        <fieldset class="import-choice">
+          <legend>{{ form.tipo_importacion.label }}</legend>
+          {{ form.tipo_importacion }}
+          {{ form.tipo_importacion.errors }}
+        </fieldset>
+        <label><span>{{ form.archivo.label }}</span>{{ form.archivo }}{{ form.archivo.errors }}</label>
+        <button class="btn btn-dark" type="submit">Importar y validar →</button>
+      </form>
+    </div>
+  </section>
+
+  <aside class="form-card exchange-columns">
+    <span class="eyebrow">Formato oficial</span>
+    <h2>23 columnas, un orden</h2>
+    <p>La exportación siempre respeta este orden. El campo LÍNEA se mantiene vacío por ahora.</p>
+    <ol>
+      {% for columna in columnas %}<li>{{ columna }}</li>{% endfor %}
+    </ol>
+  </aside>
+</div>
+
+<section>
+  <div class="section-title"><h2>Importaciones recientes</h2></div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Fecha</th><th>Archivo</th><th>Nuevos</th><th>Actualizados</th><th>Fallidos</th></tr></thead>
+      <tbody>
+        {% for log in logs %}
+        <tr><td>{{ log.fecha|date:'d/m/Y H:i' }}</td><td>{{ log.archivo_nombre }}</td><td>{{ log.filas_importadas }}</td><td>{{ log.filas_actualizadas }}</td><td>{{ log.filas_fallidas }}</td></tr>
+        {% empty %}<tr><td colspan="5" class="empty">Aún no hay importaciones.</td></tr>{% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

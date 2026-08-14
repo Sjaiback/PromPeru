@@ -30,9 +30,9 @@
         <strong>Evaluaciones pendientes</strong>
         <span>Primero las más antiguas</span>
       </div>
-      {% for atencion_pendiente in resumen_entrada.evaluaciones %}
-      <a href="{% url 'rating:evaluar_visita' atencion_pendiente.pk %}">
-        <span><strong>{{ atencion_pendiente.empresa.nombre }}</strong><small>{{ atencion_pendiente.empresa.numero_documento }} · {{ atencion_pendiente.fecha|date:'d M Y' }}</small></span>
+      {% for empresa_pendiente in resumen_entrada.evaluaciones %}
+      <a href="{% url 'rating:evaluar' empresa_pendiente.pk %}">
+        <span><strong>{{ empresa_pendiente.nombre }}</strong><small>{{ empresa_pendiente.numero_documento }} · Sin evaluación del año actual</small></span>
         <b>Evaluar →</b>
       </a>
       {% endfor %}
@@ -51,7 +51,6 @@
   <div>
     <span class="eyebrow">Panel operativo</span>
     <h1>Buenos días, {{ user.first_name|default:user.username }}.</h1>
-    <p>Una vista clara de la atención comercial de hoy.</p>
   </div>
   <a class="btn btn-primary" href="{% url 'atencion:registrar' %}"
     >+ Registrar atención</a
