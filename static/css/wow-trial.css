@@ -93,13 +93,13 @@ body.app-body .sidebar nav a {
   display: flex;
   align-items: center;
   min-height: 43px;
-  gap: 11px;
+  gap: 12px;
   padding: 9px 13px;
   overflow: hidden;
   border: 1px solid transparent;
   border-radius: 13px;
   color: #554f51;
-  font-size: 14.5px;
+  font-size: 16px;
   font-weight: 600;
   transform: none;
   transition: color .28s, background .28s, border-color .28s, transform .28s var(--wow-ease);
@@ -125,12 +125,12 @@ body.app-body .sidebar nav a.is-active {
 }
 .nav-icon,
 .theme-icon {
-  width: 18px;
-  height: 18px;
+  width: 21px;
+  height: 21px;
   flex: 0 0 auto;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.8;
+  stroke-width: 2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
