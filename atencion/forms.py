@@ -101,7 +101,7 @@ class AtencionRegistroForm(forms.Form):
     )
     email = forms.EmailField(label="E-MAIL", required=False)
     tema_consulta = forms.CharField(
-        label="TEMA DE CONSULTA (opcional)",
+        label="TEMA DE CONSULTA",
         widget=forms.Textarea(attrs={"rows": 3}),
         required=False,
     )

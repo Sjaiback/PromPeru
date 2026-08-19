@@ -4,7 +4,7 @@
 {% endblock %}
 {% block content %}
 <section class="{% if publico %}public-form-shell{% endif %}">
-  <header class="page-head compact">
+  <header class="page-head compact" data-reveal>
     <div>
       <span class="eyebrow">{% if publico %}Macro Región Centro Este{% else %}Registro del asesor{% endif %}</span>
       <h1>{% if publico %}Bienvenido a PROMPERÚ.{% else %}Nueva atención{% endif %}</h1>
@@ -15,6 +15,7 @@
     class="form-card public-register"
     novalidate
     data-atencion-form
+    data-reveal
     data-publico="{% if publico %}1{% else %}0{% endif %}"
     data-confirmacion-responsable="{{ confirmacion_responsable|default:'' }}"
   >
@@ -42,18 +43,24 @@
       </label>
       <label class="update-toggle" data-update-toggle hidden>{{ form.actualizar_datos }}<span>Actualizar mis datos guardados</span></label>
     </fieldset>
-    <fieldset class="required-step" data-required-step hidden>
+    <fieldset class="required-step" data-required-step data-step hidden>
       <legend><span>02</span> Datos de esta atención</legend>
       <div class="form-grid">
         <label data-field="tipo_atencion"><span>{{ form.tipo_atencion.label }}</span>{{ form.tipo_atencion }}{{ form.tipo_atencion.errors }}</label>
         <label><span>{{ form.responsable.label }}</span>{{ form.responsable }}{{ form.responsable.errors }}</label>
+        <label class="span-2" data-field="linea" data-step hidden>
+          <span data-linea-titulo>Línea</span>
+          <select name="linea" id="id_linea" class="form-control">
+            <option value="">Seleccionar una opción</option>
+          </select>
+        </label>
         <label class="span-2" data-field="tema_consulta"><span>{{ form.tema_consulta.label }}</span>{{ form.tema_consulta }}{{ form.tema_consulta.errors }}</label>
       </div>
     </fieldset>
-    <fieldset class="company-step" data-company-step hidden>
+    <fieldset class="company-step" data-company-step data-step hidden>
       <legend>
         <span>03</span> Datos de contacto
-        <small data-company-mode>Completa tu registro</small>
+        <small data-company-mode></small>
       </legend>
       <div class="form-grid">
         {% for field in form %}

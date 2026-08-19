@@ -39,13 +39,147 @@
       toggle = form.querySelector("[data-update-toggle]"),
       studentToggle = form.querySelector("[data-student-toggle]"),
       submit = form.querySelector("[data-submit-row]"),
-      mode = form.querySelector("[data-company-mode]");
+      mode = form.querySelector("[data-company-mode]"),
+      responsable = form.querySelector("#id_responsable"),
+      linea = form.querySelector('[data-field="linea"]'),
+      lineaTitulo = form.querySelector("[data-linea-titulo]"),
+      lineaSelect = form.querySelector("#id_linea");
+
+    var LINEAS_POR_RESPONSABLE = [
+      {
+        match: ["vasquez"],
+        titulo: "Línea: Agronegocios",
+        grupos: [
+          {
+            nombre: null,
+            opciones: ["café-cacao y derivados", "funcionales", "procesados"],
+          },
+        ],
+      },
+      {
+        match: ["campos"],
+        titulo: "Línea: Vestimenta",
+        grupos: [
+          {
+            nombre: null,
+            opciones: [
+              "Vestimenta Alpaca",
+              "Vestimenta Algodón",
+              "Ropa para Bebé",
+              "Home Deco",
+              "Calzado",
+              "Joyería",
+            ],
+          },
+        ],
+      },
+      {
+        match: ["junior"],
+        titulo: "Línea: Manufactura, Acuicola y Digitalizacion",
+        grupos: [
+          {
+            nombre: "Manufacturas",
+            opciones: [
+              "Equipamiento para la agroindustria",
+              "Acabados para la construcción",
+              "Proveedores a la minería",
+              "Cosmética",
+            ],
+          },
+          {
+            nombre: "Servicios",
+            opciones: [
+              "Software",
+              "Marketing digital",
+              "Servicios a la minería",
+              "Animación 2d y 3d",
+              "Franquicias",
+            ],
+          },
+          {
+            nombre: "Pesca",
+            opciones: ["Acuicultura (trucha)", "Peces tropicales"],
+          },
+        ],
+      },
+    ];
+
+    function normalizeText(value) {
+      return (value || "")
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+    }
+
+    function configurarLinea() {
+      var texto = "";
+      if (responsable && responsable.selectedIndex > -1) {
+        texto = normalizeText(
+          responsable.options[responsable.selectedIndex].text,
+        );
+      }
+      var config = null;
+      LINEAS_POR_RESPONSABLE.forEach(function (item) {
+        if (config) return;
+        if (item.match.some(function (kw) {
+          return texto.indexOf(normalizeText(kw)) !== -1;
+        })) config = item;
+      });
+      if (!config) {
+        show(linea, false);
+        if (lineaSelect) lineaSelect.value = "";
+        return;
+      }
+      if (lineaSelect) {
+        lineaSelect.innerHTML =
+          '<option value="">Seleccionar una opción</option>';
+        config.grupos.forEach(function (grupo) {
+          var parent = lineaSelect;
+          if (grupo.nombre) {
+            var optgroup = document.createElement("optgroup");
+            optgroup.label = grupo.nombre;
+            lineaSelect.appendChild(optgroup);
+            parent = optgroup;
+          }
+          grupo.opciones.forEach(function (opcion) {
+            var option = document.createElement("option");
+            option.value = opcion;
+            option.textContent = opcion;
+            parent.appendChild(option);
+          });
+        });
+      }
+      if (lineaTitulo) lineaTitulo.textContent = config.titulo;
+      show(linea, true);
+    }
+
+    if (responsable) responsable.addEventListener("change", configurarLinea);
+
     numero.addEventListener("input", function () {
       if (tipo.value !== "Pasaporte") this.value = this.value.replace(/\D/g, "");
       else this.value = this.value.replace(/[^a-z0-9-]/gi, "").toUpperCase();
+      var error = form.querySelector(".document-number .field-error");
+      if (error) error.remove();
+      hint.textContent =
+        "Usaremos el documento únicamente para encontrar tu registro.";
+      hint.classList.remove("found");
+      hint.classList.remove("invalid");
     });
     function show(el, visible) {
-      if (el) el.hidden = !visible;
+      if (!el) return;
+      if (visible) {
+        el.hidden = false;
+        if (el.hasAttribute("data-step")) {
+          el.classList.remove("step-rise");
+          void el.offsetWidth;
+          el.classList.add("step-rise");
+        }
+      } else {
+        el.hidden = true;
+        el.classList.remove("step-rise");
+      }
     }
     function fill(data) {
       [
@@ -107,6 +241,19 @@
       if (!doc) {
         hint.textContent = "Escribe tu número de documento para continuar.";
         hint.classList.remove("found");
+        hint.classList.add("invalid");
+        return;
+      }
+      var invalido = null;
+      if (tipo.value === "RUC" && doc.length !== 11) {
+        invalido = "El RUC debe tener exactamente 11 dígitos.";
+      } else if (tipo.value === "DNI" && doc.length !== 8) {
+        invalido = "El DNI debe tener exactamente 8 dígitos.";
+      }
+      if (invalido) {
+        hint.textContent = invalido;
+        hint.classList.remove("found");
+        hint.classList.add("invalid");
         return;
       }
       lookupBtn.disabled = true;
@@ -130,6 +277,7 @@
               data.resumen +
               ". Solo necesitamos los datos de esta atención.";
             hint.classList.add("found");
+            hint.classList.remove("invalid");
             show(toggle, true);
             if (includeData) {
               fill(data);
@@ -139,10 +287,11 @@
           } else {
             hint.textContent = "Completa tus datos.";
             hint.classList.remove("found");
+            hint.classList.remove("invalid");
             show(toggle, false);
             actualizar.checked = true;
             show(company, true);
-            mode.textContent = "Completa tu registro por primera vez.";
+            mode.textContent = "";
           }
           applyStudentMode();
         })
@@ -170,6 +319,12 @@
       show(toggle, false);
       show(studentToggle, tipo.value === "DNI");
       if (tipo.value !== "DNI" && estudiante) estudiante.checked = false;
+      var error = form.querySelector(".document-number .field-error");
+      if (error) error.remove();
+      hint.textContent =
+        "Usaremos el documento únicamente para encontrar tu registro.";
+      hint.classList.remove("found");
+      hint.classList.remove("invalid");
       applyStudentMode();
     });
     if (estudiante) estudiante.addEventListener("change", applyStudentMode);
@@ -179,6 +334,7 @@
     });
     function clearPublicForm() {
       form.reset();
+      configurarLinea();
       show(required, false);
       show(company, false);
       show(submit, false);
@@ -186,6 +342,7 @@
       show(studentToggle, tipo.value === "DNI");
       hint.textContent = "Usaremos el documento únicamente para encontrar tu registro.";
       hint.classList.remove("found");
+      hint.classList.remove("invalid");
     }
     function showConfirmation(responsable) {
       var modal = document.querySelector("[data-confirmation-modal]");
@@ -229,6 +386,7 @@
       applyStudentMode();
     }
     show(studentToggle, tipo.value === "DNI");
+    configurarLinea();
   }
   function initMessages() {
     setTimeout(function () {
@@ -314,16 +472,6 @@
       image.style.transform = "";
     });
   }
-  function initProgress() {
-    var bar = document.querySelector("[data-page-progress]");
-    if (!bar) return;
-    function update() {
-      var max = document.documentElement.scrollHeight - innerHeight;
-      bar.style.transform = "scaleX(" + (max > 0 ? scrollY / max : 0) + ")";
-    }
-    addEventListener("scroll", update, { passive: true });
-    update();
-  }
   function initActiveNav() {
     var path = location.pathname;
     document.querySelectorAll(".sidebar nav a").forEach(function (link) {
@@ -338,7 +486,6 @@
     safe(initReveal, "reveal");
     safe(initPassword, "password");
     safe(initLogin, "login");
-    safe(initProgress, "progress");
     safe(initActiveNav, "nav");
   });
 })();

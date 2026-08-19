@@ -45,7 +45,7 @@
 
     <link
         rel="stylesheet"
-        href="{% static 'css/overrides.css' %}?v=20260814-5"
+        href="{% static 'css/overrides.css' %}?v=20260819-3"
     />
 
     <link
@@ -55,7 +55,7 @@
 
     <script
         defer
-        src="{% static 'js/app.js' %}?v=20260814-2"
+        src="{% static 'js/app.js' %}?v=20260819-6"
     ></script>
 
     <script
@@ -74,6 +74,7 @@
         class="page-progress"
         data-page-progress
         aria-hidden="true"
+        hidden
     ></div>
 
     {% if user.is_authenticated and not request.es_cliente %}
